@@ -7,7 +7,7 @@ import Button from './ui/Button';
 import Icon from './ui/Icon';
 import PrintPage from './printable/PrintPage';
 import { numberToWords } from '../utils/numberToWords';
-import { COUNTRIES } from '../../constants';
+import { COUNTRIES } from '../constants';
 
 declare global {
   interface Window {

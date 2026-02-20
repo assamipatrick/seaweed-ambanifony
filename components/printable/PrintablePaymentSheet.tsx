@@ -1,7 +1,7 @@
 
 import React, { useMemo, FC, useState, useCallback, useEffect, useRef } from 'react';
-import { useSettings } from '../contexts/SettingsContext';
-import { useLocalization } from '../contexts/LocalizationContext';
+import { useSettings } from '../../contexts/SettingsContext';
+import { useLocalization } from '../../contexts/LocalizationContext';
 import { formatCurrency, formatNumber } from '../utils/formatters';
 import Button from '../ui/Button';
 import Icon from '../ui/Icon';
