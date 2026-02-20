@@ -407,30 +407,30 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [pressingSlips, seaweedTypes]);
 
-  const addSite = async (site: Omit<Site, 'id'>) => {
+  const addSite = (site: Omit<Site, 'id'>) => {
     const newSite = { ...site, id: crypto.randomUUID() };
     // Update local state immediately (optimistic update)
     setSites(prev => [...prev, newSite]);
-    // Sync to Supabase (Real-Time will handle conflicts)
-    await import('../lib/supabaseService').then(m => m.addSite(newSite));
+    // Sync to Supabase in background (non-blocking)
+    import('../lib/supabaseService').then(m => m.addSite(newSite)).catch(err => console.error('[addSite] Supabase sync failed:', err));
   };
   
-  const updateSite = async (updatedSite: Site) => {
+  const updateSite = (updatedSite: Site) => {
     // Update local state immediately
     setSites(prev => prev.map(s => s.id === updatedSite.id ? updatedSite : s));
-    // Sync to Supabase
-    await import('../lib/supabaseService').then(m => m.updateSite(updatedSite));
+    // Sync to Supabase in background
+    import('../lib/supabaseService').then(m => m.updateSite(updatedSite)).catch(err => console.error('[updateSite] Supabase sync failed:', err));
   };
   
-  const deleteSite = async (siteId: string) => {
+  const deleteSite = (siteId: string) => {
     // Update local state immediately
     setSites(prev => prev.filter(s => s.id !== siteId));
-    // Sync to Supabase
-    await import('../lib/supabaseService').then(m => m.deleteSite(siteId));
+    // Sync to Supabase in background
+    import('../lib/supabaseService').then(m => m.deleteSite(siteId)).catch(err => console.error('[deleteSite] Supabase sync failed:', err));
   };
   const getFarmersBySite = (siteId: string) => farmers.filter(f => f.siteId === siteId);
 
-  const addEmployee = async (employee: Omit<Employee, 'id'>) => {
+  const addEmployee = (employee: Omit<Employee, 'id'>) => {
       const newEmployee: Employee = {
           ...employee,
           id: crypto.randomUUID(),
@@ -438,31 +438,31 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           hireDate: employee.hireDate || new Date().toISOString().split('T')[0]
       };
       setEmployees(prev => [...prev, newEmployee]);
-      await import('../lib/supabaseService').then(m => m.addEmployee(newEmployee));
+      import('../lib/supabaseService').then(m => m.addEmployee(newEmployee)).catch(err => console.error('[addEmployee] Supabase sync failed:', err));
   };
   
-  const updateEmployee = async (updatedEmployee: Employee) => {
+  const updateEmployee = (updatedEmployee: Employee) => {
     setEmployees(prev => prev.map(e => e.id === updatedEmployee.id ? updatedEmployee : e));
-    await import('../lib/supabaseService').then(m => m.updateEmployee(updatedEmployee));
+    import('../lib/supabaseService').then(m => m.updateEmployee(updatedEmployee)).catch(err => console.error('[updateEmployee] Supabase sync failed:', err));
   };
-  const deleteEmployee = async (employeeId: string) => {
+  const deleteEmployee = (employeeId: string) => {
     setEmployees(prev => prev.filter(e => e.id !== employeeId));
     setSites(prevSites => prevSites.map(site => site.managerId === employeeId ? { ...site, managerId: undefined } : site));
-    await import('../lib/supabaseService').then(m => m.deleteEmployee(employeeId));
+    import('../lib/supabaseService').then(m => m.deleteEmployee(employeeId)).catch(err => console.error('[deleteEmployee] Supabase sync failed:', err));
   };
   
-  const deleteMultipleEmployees = async (employeeIds: string[]) => {
+  const deleteMultipleEmployees = (employeeIds: string[]) => {
     const idSet = new Set(employeeIds);
     setEmployees(prev => prev.filter(e => !idSet.has(e.id)));
     setSites(prevSites => prevSites.map(site => site.managerId && idSet.has(site.managerId) ? { ...site, managerId: undefined } : site));
-    await import('../lib/supabaseService').then(m => m.deleteMultipleEmployees(employeeIds));
+    import('../lib/supabaseService').then(m => m.deleteMultipleEmployees(employeeIds)).catch(err => console.error('[deleteMultipleEmployees] Supabase sync failed:', err));
   };
   const updateEmployeesSite = (employeeIds: string[], siteId: string) => {
     const idSet = new Set(employeeIds);
     setEmployees(prev => prev.map(e => (idSet.has(e.id) ? { ...e, siteId } : e)));
   };
 
-  const addFarmer = async (farmer: Omit<Farmer, 'id'>) => {
+  const addFarmer = (farmer: Omit<Farmer, 'id'>) => {
     const newFarmer: Farmer = {
         ...farmer,
         id: crypto.randomUUID(),
@@ -470,27 +470,27 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         joinDate: farmer.joinDate || new Date().toISOString().split('T')[0]
     };
     setFarmers(prev => [...prev, newFarmer]);
-    await import('../lib/supabaseService').then(m => m.addFarmer(newFarmer));
+    import('../lib/supabaseService').then(m => m.addFarmer(newFarmer)).catch(err => console.error('[addFarmer] Supabase sync failed:', err));
   };
   
-  const updateFarmer = async (updatedFarmer: Farmer) => {
+  const updateFarmer = (updatedFarmer: Farmer) => {
     setFarmers(prev => prev.map(f => f.id === updatedFarmer.id ? updatedFarmer : f));
-    await import('../lib/supabaseService').then(m => m.updateFarmer(updatedFarmer));
+    import('../lib/supabaseService').then(m => m.updateFarmer(updatedFarmer)).catch(err => console.error('[updateFarmer] Supabase sync failed:', err));
   };
   
-  const deleteFarmer = async (farmerId: string) => {
+  const deleteFarmer = (farmerId: string) => {
     setFarmers(prev => prev.filter(f => f.id !== farmerId));
     setFarmerCredits(prev => prev.filter(fc => fc.farmerId !== farmerId));
     setRepayments(prev => prev.filter(r => r.farmerId !== farmerId));
-    await import('../lib/supabaseService').then(m => m.deleteFarmer(farmerId));
+    import('../lib/supabaseService').then(m => m.deleteFarmer(farmerId)).catch(err => console.error('[deleteFarmer] Supabase sync failed:', err));
   };
   
-  const deleteMultipleFarmers = async (farmerIds: string[]) => {
+  const deleteMultipleFarmers = (farmerIds: string[]) => {
     const idSet = new Set(farmerIds);
     setFarmers(prev => prev.filter(f => !idSet.has(f.id)));
     setFarmerCredits(prev => prev.filter(fc => !idSet.has(fc.farmerId)));
     setRepayments(prev => prev.filter(r => !idSet.has(r.farmerId)));
-    await import('../lib/supabaseService').then(m => m.deleteMultipleFarmers(farmerIds));
+    import('../lib/supabaseService').then(m => m.deleteMultipleFarmers(farmerIds)).catch(err => console.error('[deleteMultipleFarmers] Supabase sync failed:', err));
   };
   const updateFarmersSite = (farmerIds: string[], siteId: string) => {
     const idSet = new Set(farmerIds);
@@ -551,32 +551,32 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setSeaweedTypes(prev => prev.map(st => st.id === seaweedTypeId ? { ...st, wetPrice: newPrice.wetPrice, dryPrice: newPrice.dryPrice, priceHistory: [...st.priceHistory, newPrice] } : st));
   };
 
-  const addModule = async (moduleData: Omit<Module, 'id' | 'farmerId' | 'statusHistory'>) => {
+  const addModule = (moduleData: Omit<Module, 'id' | 'farmerId' | 'statusHistory'>) => {
     const newModule: Module = { 
       ...moduleData, 
       id: crypto.randomUUID(),
       statusHistory: [{ status: ModuleStatus.CREATED, date: new Date().toISOString() }, { status: ModuleStatus.FREE, date: new Date().toISOString(), notes: 'Module is ready for assignment.' }]
     };
     setModules(prev => [...prev, newModule]);
-    await import('../lib/supabaseService').then(m => m.addModule(newModule));
+    import('../lib/supabaseService').then(m => m.addModule(newModule)).catch(err => console.error('[addModule] Supabase sync failed:', err));
   };
   
-  const updateModule = async (moduleData: Module) => {
+  const updateModule = (moduleData: Module) => {
     setModules(prev => prev.map(m => m.id === moduleData.id ? moduleData : m));
-    await import('../lib/supabaseService').then(m => m.updateModule(moduleData));
+    import('../lib/supabaseService').then(m => m.updateModule(moduleData)).catch(err => console.error('[updateModule] Supabase sync failed:', err));
   };
   
-  const deleteModule = async (moduleId: string) => {
+  const deleteModule = (moduleId: string) => {
     setModules(prev => prev.filter(m => m.id !== moduleId));
     setCultivationCycles(prev => prev.filter(c => c.moduleId !== moduleId));
-    await import('../lib/supabaseService').then(m => m.deleteModule(moduleId));
+    import('../lib/supabaseService').then(m => m.deleteModule(moduleId)).catch(err => console.error('[deleteModule] Supabase sync failed:', err));
   };
   
-  const deleteMultipleModules = async (moduleIds: string[]) => {
+  const deleteMultipleModules = (moduleIds: string[]) => {
     const idSet = new Set(moduleIds);
     setModules(prev => prev.filter(m => !idSet.has(m.id)));
     setCultivationCycles(prev => prev.filter(c => c.moduleId && !idSet.has(c.moduleId)));
-    await import('../lib/supabaseService').then(m => m.deleteMultipleModules(moduleIds));
+    import('../lib/supabaseService').then(m => m.deleteMultipleModules(moduleIds)).catch(err => console.error('[deleteMultipleModules] Supabase sync failed:', err));
   };
   const updateModulesFarmer = (moduleIds: string[], farmerId: string) => {
     const idSet = new Set(moduleIds);
