@@ -164,6 +164,7 @@ const CuttingOperations: React.FC = () => {
                                         return farmerName ? [farmerName] : [];
                                     }
                                     // Fallback for old data or other types of cutting operations.
+                                    if (!op.moduleCuts || !Array.isArray(op.moduleCuts)) return [];
                                     const moduleIds = op.moduleCuts.map(mc => mc.moduleId);
                                     const farmerIds = moduleIds
                                         .map(moduleId => modules.find(m => m.id === moduleId)?.farmerId)
@@ -173,13 +174,13 @@ const CuttingOperations: React.FC = () => {
                                         .filter((name): name is string => !!name);
                                 })();
                                 
-                                const allModuleDisplayTexts = op.moduleCuts.map(mc => {
+                                const allModuleDisplayTexts = (op.moduleCuts && Array.isArray(op.moduleCuts)) ? op.moduleCuts.map(mc => {
                                     const moduleInfo = moduleInfoMap.get(mc.moduleId);
                                     // Format: ModuleCode or shortened ID if not found
                                     return moduleInfo 
                                         ? `${moduleInfo.code} (${mc.linesCut} l.)` 
                                         : <span className="font-mono text-[10px] text-gray-500">{t('unknown')} (ID: {mc.moduleId.substring(0, 6)})</span>;
-                                });
+                                }) : [];
 
                                 return (
                                     <tr key={op.id} className="border-b dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700">

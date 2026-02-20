@@ -17,11 +17,35 @@ import { dmsToDd } from '../utils/converters';
 
 const SiteManagement: React.FC = () => {
     const { t } = useLocalization();
-    const { sites, deleteSite, addSite, updateSite, employees, modules } = useData();
+    const { sites, deleteSite, addSite, updateSite, employees, modules, zones } = useData();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingSite, setEditingSite] = useState<Site | null>(null);
     const [isConfirmOpen, setIsConfirmOpen] = useState(false);
     const [siteToDelete, setSiteToDelete] = useState<string | null>(null);
+
+    // Hydrate sites with full zone objects
+    const hydratedSites = useMemo(() => {
+        return sites.map(site => {
+            if (!site.zones || !Array.isArray(site.zones)) return site;
+            
+            // If zones are IDs (strings), hydrate them with full zone objects
+            const hydratedZones = site.zones
+                .map(zoneIdOrObj => {
+                    // Already a full object?
+                    if (typeof zoneIdOrObj === 'object' && 'name' in zoneIdOrObj) {
+                        return zoneIdOrObj;
+                    }
+                    // It's an ID, find the full zone object
+                    return zones.find(z => z.id === zoneIdOrObj);
+                })
+                .filter((z): z is Zone => z !== undefined);
+            
+            return {
+                ...site,
+                zones: hydratedZones
+            };
+        });
+    }, [sites, zones]);
 
     const handleOpenModal = (site: Site | null = null) => {
         setEditingSite(site);
@@ -56,7 +80,7 @@ const SiteManagement: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 gap-6">
-                {sites.map(site => {
+                {hydratedSites.map(site => {
                     const manager = employees.find(e => e.id === site.managerId);
                     return (
                         <Card key={site.id}>
