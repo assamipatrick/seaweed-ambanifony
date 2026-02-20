@@ -117,6 +117,7 @@ const completeData = {
     [ids.adminUser]: {
       id: ids.adminUser,
       email: 'admin@seafarm.com',
+      password: 'password',
       firstName: 'Admin',
       lastName: 'System',
       roleId: ids.adminRole,
@@ -127,6 +128,7 @@ const completeData = {
     [ids.managerUser]: {
       id: ids.managerUser,
       email: 'manager@seafarm.com',
+      password: 'password',
       firstName: 'Jean',
       lastName: 'Manager',
       roleId: ids.managerRole,
@@ -137,6 +139,7 @@ const completeData = {
     [ids.employeeUser]: {
       id: ids.employeeUser,
       email: 'employee@seafarm.com',
+      password: 'password',
       firstName: 'Marie',
       lastName: 'Employee',
       roleId: ids.employeeRole,
