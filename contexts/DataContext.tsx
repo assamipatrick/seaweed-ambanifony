@@ -298,24 +298,48 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const seedInitialized = useRef(false);
 
   // ========== FIREBASE REAL-TIME SYNC ==========
-  // Sync main entities with Firebase Realtime Database
+  // Sync ALL 26 collections with Firebase Realtime Database
   useFirebaseSync({
-    sites,
-    setSites,
-    employees,
-    setEmployees,
-    farmers,
-    setFarmers,
-    serviceProviders,
-    setServiceProviders,
-    creditTypes,
-    setCreditTypes,
-    seaweedTypes,
-    setSeaweedTypes,
-    modules,
-    setModules,
-    cultivationCycles,
-    setCultivationCycles
+    collections: [
+      // Core entities
+      { collectionName: 'sites', data: sites, setData: setSites },
+      { collectionName: 'employees', data: employees, setData: setEmployees },
+      { collectionName: 'farmers', data: farmers, setData: setFarmers },
+      { collectionName: 'service_providers', data: serviceProviders, setData: setServiceProviders },
+      { collectionName: 'modules', data: modules, setData: setModules },
+      { collectionName: 'cultivation_cycles', data: cultivationCycles, setData: setCultivationCycles },
+      
+      // Reference data
+      { collectionName: 'credit_types', data: creditTypes, setData: setCreditTypes },
+      { collectionName: 'seaweed_types', data: seaweedTypes, setData: setSeaweedTypes },
+      
+      // Financial
+      { collectionName: 'farmer_credits', data: farmerCredits, setData: setFarmerCredits },
+      { collectionName: 'repayments', data: repayments, setData: setRepayments },
+      { collectionName: 'monthly_payments', data: monthlyPayments, setData: setMonthlyPayments },
+      
+      // Operations
+      { collectionName: 'farmer_deliveries', data: farmerDeliveries, setData: setFarmerDeliveries },
+      { collectionName: 'stock_movements', data: stockMovements, setData: setStockMovements },
+      { collectionName: 'pressing_slips', data: pressingSlips, setData: setPressingSlips },
+      { collectionName: 'pressed_stock_movements', data: pressedStockMovements, setData: setPressedStockMovements },
+      { collectionName: 'cutting_operations', data: cuttingOperations, setData: setCuttingOperations },
+      
+      // Exports & Transfers
+      { collectionName: 'export_documents', data: exportDocuments, setData: setExportDocuments },
+      { collectionName: 'site_transfers', data: siteTransfers, setData: setSiteTransfers },
+      
+      // Monitoring
+      { collectionName: 'incidents', data: incidents, setData: setIncidents },
+      { collectionName: 'periodic_tests', data: periodicTests, setData: setPeriodicTests },
+      { collectionName: 'pest_observations', data: pestObservations, setData: setPestObservations },
+      
+      // System
+      { collectionName: 'users', data: users, setData: setUsers },
+      { collectionName: 'invitations', data: invitations, setData: setInvitations },
+      { collectionName: 'message_logs', data: messageLogs, setData: setMessageLogs },
+      { collectionName: 'gallery_photos', data: galleryPhotos, setData: setGalleryPhotos }
+    ]
   });
   
   // Keep localStorage as fallback cache
