@@ -30,7 +30,7 @@ const FarmMap: React.FC = () => {
     const biomassLayerRef = useRef<any>(null); // New ref for Biomass
     const moduleLocationsRef = useRef<Map<string, any>>(new Map());
 
-    const { sites, modules, cultivationCycles, farmers, employees, seaweedTypes } = useData();
+    const { sites, modules, cultivationCycles, farmers, employees, seaweedTypes, zones } = useData();
     const [selectedModuleData, setSelectedModuleData] = useState<CombinedModuleData | null>(null);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
 
@@ -217,7 +217,17 @@ const FarmMap: React.FC = () => {
     
             // --- ZONES ---
             const siteZones = site.zones || [];
-            siteZones.forEach(zone => {
+            siteZones.forEach(zoneIdOrObj => {
+                // Hydrate zone if it's just an ID
+                const zone = typeof zoneIdOrObj === 'string' 
+                    ? zones.find(z => z.id === zoneIdOrObj)
+                    : zoneIdOrObj;
+                
+                // Skip if zone not found or no geoPoints
+                if (!zone || !zone.geoPoints || !Array.isArray(zone.geoPoints)) {
+                    return;
+                }
+                
                 const coordsXY = convertGeoPointsToXY(zone.geoPoints);
                 
                 if (coordsXY.length >= 3) {

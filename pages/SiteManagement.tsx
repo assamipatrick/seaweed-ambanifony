@@ -81,7 +81,7 @@ const SiteManagement: React.FC = () => {
 
             <div className="grid grid-cols-1 gap-6">
                 {hydratedSites.map(site => {
-                    const manager = employees.find(e => e.id === site.managerId);
+                    const manager = employees?.find(e => e.id === site.managerId);
                     return (
                         <Card key={site.id}>
                             <div className="flex justify-between items-start mb-4">
