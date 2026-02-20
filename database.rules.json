@@ -1,0 +1,70 @@
+{
+  "rules": {
+    ".read": "auth != null",
+    ".write": "auth != null",
+    
+    "sites": {
+      ".indexOn": ["code", "name"],
+      "$siteId": {
+        ".validate": "newData.hasChildren(['id', 'name', 'code'])",
+        ".write": "auth != null"
+      }
+    },
+    
+    "employees": {
+      ".indexOn": ["code", "siteId"],
+      "$employeeId": {
+        ".validate": "newData.hasChildren(['id', 'firstName', 'lastName', 'code'])",
+        ".write": "auth != null"
+      }
+    },
+    
+    "farmers": {
+      ".indexOn": ["code", "siteId"],
+      "$farmerId": {
+        ".validate": "newData.hasChildren(['id', 'firstName', 'lastName', 'code'])",
+        ".write": "auth != null"
+      }
+    },
+    
+    "service_providers": {
+      ".indexOn": ["name"],
+      "$providerId": {
+        ".validate": "newData.hasChildren(['id', 'name'])",
+        ".write": "auth != null"
+      }
+    },
+    
+    "credit_types": {
+      ".indexOn": ["name"],
+      "$typeId": {
+        ".validate": "newData.hasChildren(['id', 'name'])",
+        ".write": "auth != null"
+      }
+    },
+    
+    "seaweed_types": {
+      ".indexOn": ["name"],
+      "$typeId": {
+        ".validate": "newData.hasChildren(['id', 'name'])",
+        ".write": "auth != null"
+      }
+    },
+    
+    "modules": {
+      ".indexOn": ["code", "siteId"],
+      "$moduleId": {
+        ".validate": "newData.hasChildren(['id', 'code'])",
+        ".write": "auth != null"
+      }
+    },
+    
+    "cultivation_cycles": {
+      ".indexOn": ["moduleId", "plantedDate"],
+      "$cycleId": {
+        ".validate": "newData.hasChildren(['id'])",
+        ".write": "auth != null"
+      }
+    }
+  }
+}
