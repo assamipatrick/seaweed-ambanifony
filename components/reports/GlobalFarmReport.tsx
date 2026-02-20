@@ -996,10 +996,10 @@ const Page3: FC<any> = ({ period, onSiteData, warehouseData, sites, seaweedTypes
     const colGroups = (
         <colgroup>
             <col style={{ width: '16%' }} />
-            <col style={{ width: '6%' }} /> <col style={{ width: '5%' }} /> <col style={{ width: '10%' }} />
-            <col style={{ width: '6%' }} /> <col style={{ width: '5%' }} /> <col style={{ width: '10%' }} />
-            <col style={{ width: '6%' }} /> <col style={{ width: '5%' }} /> <col style={{ width: '10%' }} />
-            <col style={{ width: '6%' }} /> <col style={{ width: '5%' }} /> <col style={{ width: '10%' }} />
+            <col style={{ width: '6%' }} /><col style={{ width: '5%' }} /><col style={{ width: '10%' }} />
+            <col style={{ width: '6%' }} /><col style={{ width: '5%' }} /><col style={{ width: '10%' }} />
+            <col style={{ width: '6%' }} /><col style={{ width: '5%' }} /><col style={{ width: '10%' }} />
+            <col style={{ width: '6%' }} /><col style={{ width: '5%' }} /><col style={{ width: '10%' }} />
         </colgroup>
     );
 
@@ -1219,7 +1219,7 @@ const Page4: FC<any> = ({ period, year, exportDocuments, seaweedTypes, page, tot
     const periodDocs = useMemo(() => {
         // Very basic check for "period" string match for now, can be improved with date parsing
         return exportDocuments.filter(d => {
-            return d.date.includes(String(year)); // Fallback to yearly for now if strict monthly check is hard without exact dates
+            return d.date?.includes(String(year)); // Fallback to yearly for now if strict monthly check is hard without exact dates
         });
     }, [exportDocuments, period, year]);
 
