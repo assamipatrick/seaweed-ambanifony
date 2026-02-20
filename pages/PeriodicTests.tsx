@@ -52,10 +52,10 @@ const PeriodicTestFormModal: React.FC<{ isOpen: boolean; onClose: () => void; te
             setFormData(test);
         } else {
              setFormData({
-                identity: '', date: new Date().toISOString().split('T')[0], siteId: sites[0]?.id || '', 
-                seaweedTypeId: seaweedTypes[0]?.id || '', zoneId: sites[0]?.zones[0]?.id || '',
+                identity: '', date: new Date().toISOString().split('T')[0], siteId: (sites || [])[0]?.id || '', 
+                seaweedTypeId: (seaweedTypes || [])[0]?.id || '', zoneId: ((sites || [])[0]?.zones || [])[0]?.id || '',
                 period: 'PLANTING', weightKg: 0, growthRate: null, temperature: null, salinity: null, precipitation: null,
-                windSpeed: null, windDirection: null, waveHeight: null, weatherDataSource: 'manual', conductorId: employees[0]?.id || ''
+                windSpeed: null, windDirection: null, waveHeight: null, weatherDataSource: 'manual', conductorId: (employees || [])[0]?.id || ''
             });
         }
         setErrors({});

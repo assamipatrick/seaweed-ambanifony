@@ -42,7 +42,7 @@ const Reports: React.FC = () => {
     const monthKeys = useMemo(() => ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'], []);
     const months = useMemo(() => Array.from({ length: 12 }, (_, i) => i), []);
     
-    const sortedFarmers = useMemo(() => [...farmers].sort((a,b) => a.firstName.localeCompare(b.firstName)), [farmers]);
+    const sortedFarmers = useMemo(() => [...(farmers || [])].sort((a,b) => a.firstName.localeCompare(b.firstName)), [farmers]);
 
     useEffect(() => {
         if (sortedFarmers.length > 0 && !selectedFarmerId) {

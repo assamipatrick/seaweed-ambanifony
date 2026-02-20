@@ -33,10 +33,10 @@ const IncidentManagement: React.FC = () => {
         status: 'all',
     });
 
-    const siteMap = useMemo(() => new Map(sites.map(s => [s.id, s.name])), [sites]);
-    const employeeMap = useMemo(() => new Map(employees.map(e => [e.id, `${e.firstName} ${e.lastName}`])), [employees]);
-    const typeMap = useMemo(() => new Map(incidentTypes.map(it => [it.id, it.name])), [incidentTypes]);
-    const severityMap = useMemo(() => new Map(incidentSeverities.map(is => [is.id, is.name])), [incidentSeverities]);
+    const siteMap = useMemo(() => new Map((sites || []).map(s => [s.id, s.name])), [sites]);
+    const employeeMap = useMemo(() => new Map((employees || []).map(e => [e.id, `${e.firstName} ${e.lastName}`])), [employees]);
+    const typeMap = useMemo(() => new Map((incidentTypes || []).map(it => [it.id, it.name])), [incidentTypes]);
+    const severityMap = useMemo(() => new Map((incidentSeverities || []).map(is => [is.id, is.name])), [incidentSeverities]);
 
     const summaryStats = useMemo(() => {
         const open = incidents.filter(i => i.status === IncidentStatus.OPEN).length;

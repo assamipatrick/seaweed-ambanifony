@@ -31,7 +31,7 @@ const Exports: React.FC = () => {
     const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
-    const seaweedTypeMap = useMemo(() => new Map(seaweedTypes.map(st => [st.id, st.name])), [seaweedTypes]);
+    const seaweedTypeMap = useMemo(() => new Map((seaweedTypes || []).map(st => [st.id, st.name])), [seaweedTypes]);
 
     const sortedDocuments = useMemo(() => {
         let sortableItems = exportDocuments.map(doc => ({

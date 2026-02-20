@@ -79,11 +79,11 @@ const CreditStatus: React.FC = () => {
     const selectAllCheckboxRef = useRef<HTMLInputElement>(null);
     // Note: Bulk actions could be implemented here as modals, for brevity we focus on the main view.
 
-    const creditTypeMap = useMemo(() => new Map(creditTypes.map(ct => [ct.id, ct.name])), [creditTypes]);
+    const creditTypeMap = useMemo(() => new Map((creditTypes || []).map(ct => [ct.id, ct.name])), [creditTypes]);
 
     const farmerCreditSummaries = useMemo((): FarmerCreditSummary[] => {
         let sortableItems = farmers.map(farmer => {
-            const credits = farmerCredits.filter(c => c.farmerId === farmer.id);
+            const credits = (farmerCredits || []).filter(c => c.farmerId === farmer.id);
             const farmerRepayments = repayments.filter(r => r.farmerId === farmer.id);
 
             const totalContracted = credits.reduce((sum, c) => sum + c.totalAmount, 0);

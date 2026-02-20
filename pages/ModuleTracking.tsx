@@ -76,7 +76,7 @@ export const ModuleTracking: React.FC = () => {
         if (filters.siteId === 'all') {
             setAvailableZones([]);
         } else {
-            const selectedSite = sites.find(s => s.id === filters.siteId);
+            const selectedSite = (sites || []).find(s => s.id === filters.siteId);
             setAvailableZones(selectedSite?.zones || []);
         }
     }, [filters.siteId, sites]);
@@ -95,19 +95,19 @@ export const ModuleTracking: React.FC = () => {
     }, []);
 
     const combinedData = useMemo((): CombinedModuleData[] => {
-        return modules.map(module => {
-            const cycle = [...cultivationCycles]
+        return (modules || []).map(module => {
+            const cycle = [...(cultivationCycles || [])]
                 .filter(c => c.moduleId === module.id)
                 .sort((a,b) => new Date(b.plantingDate).getTime() - new Date(a.plantingDate).getTime())[0];
             
-            const site = sites.find(s => s.id === module.siteId);
-            const zone = site?.zones.find(z => z.id === module.zoneId);
-            const seaweedType = cycle ? seaweedTypes.find(st => st.id === cycle.seaweedTypeId) : undefined;
-            const farmer = module.farmerId ? farmers.find(f => f.id === module.farmerId) : undefined;
+            const site = (sites || []).find(s => s.id === module.siteId);
+            const zone = (site?.zones || []).find(z => z.id === module.zoneId);
+            const seaweedType = cycle ? (seaweedTypes || []).find(st => st.id === cycle.seaweedTypeId) : undefined;
+            const farmer = module.farmerId ? (farmers || []).find(f => f.id === module.farmerId) : undefined;
             
             let alert: CombinedModuleData['alert'] | undefined = undefined;
             if (!module.farmerId) {
-                const completedCycles = cultivationCycles
+                const completedCycles = (cultivationCycles || [])
                     .filter(c => c.moduleId === module.id && c.harvestDate)
                     .sort((a, b) => new Date(b.harvestDate!).getTime() - new Date(a.harvestDate!).getTime());
 

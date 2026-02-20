@@ -24,8 +24,8 @@ const CuttingOperations: React.FC = () => {
     const [sortConfig, setSortConfig] = useState<{ key: SortableKeys; direction: 'ascending' | 'descending' }>({ key: 'date', direction: 'descending' });
 
 
-    const siteMap = useMemo(() => new Map(sites.map(s => [s.id, s.name])), [sites]);
-    const providerMap = useMemo(() => new Map(serviceProviders.map(p => [p.id, p.name])), [serviceProviders]);
+    const siteMap = useMemo(() => new Map((sites || []).map(s => [s.id, s.name])), [sites]);
+    const providerMap = useMemo(() => new Map((serviceProviders || []).map(p => [p.id, p.name])), [serviceProviders]);
     const farmerMap = useMemo(() => new Map(farmers.map(f => [f.id, `${f.firstName} ${f.lastName}`])), [farmers]);
     const moduleInfoMap = useMemo(() => {
         const map = new Map<string, { code: string; farmerName?: string }>();

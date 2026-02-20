@@ -136,7 +136,7 @@ const EmployeeForm: React.FC<EmployeeFormProps> = ({ isOpen, onClose, employee, 
                     </Select>
                     <Select label={t('role')} value={formData.role} onChange={e => handleChange('role', e.target.value)} error={errors.role} required>
                         <option value="">{t('selectRole')}</option>
-                        {roles.map(r => <option key={r.id} value={r.name}>{r.name}</option>)}
+                        {(roles || []).map(r => <option key={r.id} value={r.name}>{r.name}</option>)}
                     </Select>
                     <Input label={`${t('team')} (${t('optional')})`} value={formData.team} onChange={e => handleChange('team', e.target.value)} />
                     <Input

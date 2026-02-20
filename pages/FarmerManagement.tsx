@@ -37,11 +37,11 @@ const FarmerManagement: React.FC = () => {
     const [isFireModalOpen, setIsFireModalOpen] = useState(false);
     const [farmerToFire, setFarmerToFire] = useState<Farmer | null>(null);
 
-    const siteMap = useMemo(() => new Map(sites.map(site => [site.id, site.name])), [sites]);
+    const siteMap = useMemo(() => new Map((sites || []).map(site => [site.id, site.name])), [sites]);
     
     const filteredFarmers = useMemo(() => {
         if (statusFilter === 'ALL') return farmers;
-        return farmers.filter(f => f.status === statusFilter);
+        return (farmers || []).filter(f => f.status === statusFilter);
     }, [farmers, statusFilter]);
 
     const sortedFarmers = useMemo(() => {
