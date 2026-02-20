@@ -1,0 +1,8 @@
+- e32944b test: Script automatique test toutes pages
+- 645a298 docs: Résumé final complet session sync temps réel
+- 5e8c9fa docs: Rapport complet corrections page Reports
+- c00df9e fix: Corriger TypeError GlobalFarmReport (period.startsWith)
+- 441e977 docs: Analyse complète erreur Google API 400 (Exports)
+- 0c3e553 fix: Corriger TypeError dans Exports (containers undefined)
+- 6945ec9 docs: Documentation complète sync temps réel Firebase
+- 8b6cda9 fix: Sync temps réel Firebase + corrections SiteTransfers
