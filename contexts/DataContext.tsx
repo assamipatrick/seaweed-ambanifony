@@ -3,6 +3,7 @@ import React, { createContext, useState, useContext, useEffect, useRef } from 'r
 import type { Site, Farmer, CreditType, FarmerCredit, Employee, SeaweedType, Module, CultivationCycle, ModuleStatusHistory, StockMovement, PressingSlip, PressedStockMovement, ExportDocument, SiteTransfer, ServiceProvider, SeaweedPriceHistory, Repayment, FarmerDelivery, CuttingOperation, SiteTransferHistoryEntry, Incident, IncidentType, IncidentSeverity, PeriodicTest, Role, MonthlyPayment, TestPeriod, PestObservation, User, Invitation, MessageLog, GalleryPhoto } from '../types';
 import { ModuleStatus, StockMovementType, PressedStockMovementType, SiteTransferStatus, ExportDocType, ContainerType, IncidentStatus, RecipientType, InvitationStatus, FarmerStatus, EmployeeStatus, ServiceProviderStatus } from '../types';
 import { PERMISSIONS } from '../permissions';
+import { useSupabaseSync } from '../hooks/useSupabaseSync';
 
 // --- Default Seed Data ---
 const defaultIncidentTypes: IncidentType[] = [
@@ -296,6 +297,18 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   
   const seedInitialized = useRef(false);
 
+  // ========== SUPABASE REAL-TIME SYNC ==========
+  // Sync main entities with Supabase
+  useSupabaseSync({ table: 'sites', localData: sites, setLocalData: setSites });
+  useSupabaseSync({ table: 'employees', localData: employees, setLocalData: setEmployees });
+  useSupabaseSync({ table: 'farmers', localData: farmers, setLocalData: setFarmers });
+  useSupabaseSync({ table: 'service_providers', localData: serviceProviders, setLocalData: setServiceProviders });
+  useSupabaseSync({ table: 'credit_types', localData: creditTypes, setLocalData: setCreditTypes });
+  useSupabaseSync({ table: 'seaweed_types', localData: seaweedTypes, setLocalData: setSeaweedTypes });
+  useSupabaseSync({ table: 'modules', localData: modules, setLocalData: setModules });
+  useSupabaseSync({ table: 'cultivation_cycles', localData: cultivationCycles, setLocalData: setCultivationCycles });
+  
+  // Keep localStorage as fallback cache
   useEffect(() => { localStorage.setItem('sites', JSON.stringify(sites)); }, [sites]);
   useEffect(() => { localStorage.setItem('employees', JSON.stringify(employees)); }, [employees]);
   useEffect(() => { localStorage.setItem('farmers', JSON.stringify(farmers)); }, [farmers]);
@@ -394,55 +407,90 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [pressingSlips, seaweedTypes]);
 
-  const addSite = (site: Omit<Site, 'id'>) => setSites(prev => [...prev, { ...site, id: `site-${Date.now()}` }]);
-  const updateSite = (updatedSite: Site) => setSites(prev => prev.map(s => s.id === updatedSite.id ? updatedSite : s));
-  const deleteSite = (siteId: string) => setSites(prev => prev.filter(s => s.id !== siteId));
+  const addSite = async (site: Omit<Site, 'id'>) => {
+    const newSite = { ...site, id: crypto.randomUUID() };
+    // Update local state immediately (optimistic update)
+    setSites(prev => [...prev, newSite]);
+    // Sync to Supabase (Real-Time will handle conflicts)
+    await import('../lib/supabaseService').then(m => m.addSite(newSite));
+  };
+  
+  const updateSite = async (updatedSite: Site) => {
+    // Update local state immediately
+    setSites(prev => prev.map(s => s.id === updatedSite.id ? updatedSite : s));
+    // Sync to Supabase
+    await import('../lib/supabaseService').then(m => m.updateSite(updatedSite));
+  };
+  
+  const deleteSite = async (siteId: string) => {
+    // Update local state immediately
+    setSites(prev => prev.filter(s => s.id !== siteId));
+    // Sync to Supabase
+    await import('../lib/supabaseService').then(m => m.deleteSite(siteId));
+  };
   const getFarmersBySite = (siteId: string) => farmers.filter(f => f.siteId === siteId);
 
-  const addEmployee = (employee: Omit<Employee, 'id'>) => {
+  const addEmployee = async (employee: Omit<Employee, 'id'>) => {
       const newEmployee: Employee = {
           ...employee,
-          id: `emp-${Date.now()}`,
+          id: crypto.randomUUID(),
           status: EmployeeStatus.ACTIVE,
           hireDate: employee.hireDate || new Date().toISOString().split('T')[0]
       };
       setEmployees(prev => [...prev, newEmployee]);
+      await import('../lib/supabaseService').then(m => m.addEmployee(newEmployee));
   };
-  const updateEmployee = (updatedEmployee: Employee) => setEmployees(prev => prev.map(e => e.id === updatedEmployee.id ? updatedEmployee : e));
-  const deleteEmployee = (employeeId: string) => {
+  
+  const updateEmployee = async (updatedEmployee: Employee) => {
+    setEmployees(prev => prev.map(e => e.id === updatedEmployee.id ? updatedEmployee : e));
+    await import('../lib/supabaseService').then(m => m.updateEmployee(updatedEmployee));
+  };
+  const deleteEmployee = async (employeeId: string) => {
     setEmployees(prev => prev.filter(e => e.id !== employeeId));
     setSites(prevSites => prevSites.map(site => site.managerId === employeeId ? { ...site, managerId: undefined } : site));
+    await import('../lib/supabaseService').then(m => m.deleteEmployee(employeeId));
   };
-  const deleteMultipleEmployees = (employeeIds: string[]) => {
+  
+  const deleteMultipleEmployees = async (employeeIds: string[]) => {
     const idSet = new Set(employeeIds);
     setEmployees(prev => prev.filter(e => !idSet.has(e.id)));
     setSites(prevSites => prevSites.map(site => site.managerId && idSet.has(site.managerId) ? { ...site, managerId: undefined } : site));
+    await import('../lib/supabaseService').then(m => m.deleteMultipleEmployees(employeeIds));
   };
   const updateEmployeesSite = (employeeIds: string[], siteId: string) => {
     const idSet = new Set(employeeIds);
     setEmployees(prev => prev.map(e => (idSet.has(e.id) ? { ...e, siteId } : e)));
   };
 
-  const addFarmer = (farmer: Omit<Farmer, 'id'>) => {
+  const addFarmer = async (farmer: Omit<Farmer, 'id'>) => {
     const newFarmer: Farmer = {
         ...farmer,
-        id: `farm-${Date.now()}`,
+        id: crypto.randomUUID(),
         status: farmer.status || FarmerStatus.ACTIVE,
         joinDate: farmer.joinDate || new Date().toISOString().split('T')[0]
     };
     setFarmers(prev => [...prev, newFarmer]);
+    await import('../lib/supabaseService').then(m => m.addFarmer(newFarmer));
   };
-  const updateFarmer = (updatedFarmer: Farmer) => setFarmers(prev => prev.map(f => f.id === updatedFarmer.id ? updatedFarmer : f));
-  const deleteFarmer = (farmerId: string) => {
+  
+  const updateFarmer = async (updatedFarmer: Farmer) => {
+    setFarmers(prev => prev.map(f => f.id === updatedFarmer.id ? updatedFarmer : f));
+    await import('../lib/supabaseService').then(m => m.updateFarmer(updatedFarmer));
+  };
+  
+  const deleteFarmer = async (farmerId: string) => {
     setFarmers(prev => prev.filter(f => f.id !== farmerId));
     setFarmerCredits(prev => prev.filter(fc => fc.farmerId !== farmerId));
     setRepayments(prev => prev.filter(r => r.farmerId !== farmerId));
+    await import('../lib/supabaseService').then(m => m.deleteFarmer(farmerId));
   };
-   const deleteMultipleFarmers = (farmerIds: string[]) => {
+  
+  const deleteMultipleFarmers = async (farmerIds: string[]) => {
     const idSet = new Set(farmerIds);
     setFarmers(prev => prev.filter(f => !idSet.has(f.id)));
     setFarmerCredits(prev => prev.filter(fc => !idSet.has(fc.farmerId)));
     setRepayments(prev => prev.filter(r => !idSet.has(r.farmerId)));
+    await import('../lib/supabaseService').then(m => m.deleteMultipleFarmers(farmerIds));
   };
   const updateFarmersSite = (farmerIds: string[], siteId: string) => {
     const idSet = new Set(farmerIds);
@@ -503,23 +551,32 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setSeaweedTypes(prev => prev.map(st => st.id === seaweedTypeId ? { ...st, wetPrice: newPrice.wetPrice, dryPrice: newPrice.dryPrice, priceHistory: [...st.priceHistory, newPrice] } : st));
   };
 
-  const addModule = (moduleData: Omit<Module, 'id' | 'farmerId' | 'statusHistory'>) => {
+  const addModule = async (moduleData: Omit<Module, 'id' | 'farmerId' | 'statusHistory'>) => {
     const newModule: Module = { 
       ...moduleData, 
-      id: `mod-${Date.now()}`,
+      id: crypto.randomUUID(),
       statusHistory: [{ status: ModuleStatus.CREATED, date: new Date().toISOString() }, { status: ModuleStatus.FREE, date: new Date().toISOString(), notes: 'Module is ready for assignment.' }]
     };
     setModules(prev => [...prev, newModule]);
+    await import('../lib/supabaseService').then(m => m.addModule(newModule));
   };
-  const updateModule = (moduleData: Module) => setModules(prev => prev.map(m => m.id === moduleData.id ? moduleData : m));
-  const deleteModule = (moduleId: string) => {
+  
+  const updateModule = async (moduleData: Module) => {
+    setModules(prev => prev.map(m => m.id === moduleData.id ? moduleData : m));
+    await import('../lib/supabaseService').then(m => m.updateModule(moduleData));
+  };
+  
+  const deleteModule = async (moduleId: string) => {
     setModules(prev => prev.filter(m => m.id !== moduleId));
     setCultivationCycles(prev => prev.filter(c => c.moduleId !== moduleId));
+    await import('../lib/supabaseService').then(m => m.deleteModule(moduleId));
   };
-  const deleteMultipleModules = (moduleIds: string[]) => {
+  
+  const deleteMultipleModules = async (moduleIds: string[]) => {
     const idSet = new Set(moduleIds);
     setModules(prev => prev.filter(m => !idSet.has(m.id)));
     setCultivationCycles(prev => prev.filter(c => c.moduleId && !idSet.has(c.moduleId)));
+    await import('../lib/supabaseService').then(m => m.deleteMultipleModules(moduleIds));
   };
   const updateModulesFarmer = (moduleIds: string[], farmerId: string) => {
     const idSet = new Set(moduleIds);
