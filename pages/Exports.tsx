@@ -34,9 +34,9 @@ const Exports: React.FC = () => {
     const seaweedTypeMap = useMemo(() => new Map((seaweedTypes || []).map(st => [st.id, st.name])), [seaweedTypes]);
 
     const sortedDocuments = useMemo(() => {
-        let sortableItems = exportDocuments.map(doc => ({
+        let sortableItems = (exportDocuments || []).map(doc => ({
             ...doc,
-            totalValue: doc.containers.reduce((sum, c) => sum + c.value, 0)
+            totalValue: (doc.containers || []).reduce((sum, c) => sum + c.value, 0)
         }));
         
         sortableItems.sort((a, b) => {
@@ -155,7 +155,7 @@ const Exports: React.FC = () => {
                                         <td className="p-3">{doc.invoiceNo}</td>
                                         <td className="p-3">{seaweedTypeMap.get(doc.seaweedTypeId) || doc.seaweedTypeId}</td>
                                         <td className="p-3">{doc.destinationCountry}</td>
-                                        <td className="p-3 text-center">{doc.containers.length}</td>
+                                        <td className="p-3 text-center">{(doc.containers || []).length}</td>
                                         <td className="p-3 text-right">{formatCurrency(doc.totalValue, { ...settings.localization, currencySymbol })}</td>
                                         <td className="p-3 text-right">
                                             <div className="relative flex justify-end gap-1" ref={openDropdownId === doc.id ? dropdownRef : null}>
