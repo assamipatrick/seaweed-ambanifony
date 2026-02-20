@@ -146,16 +146,17 @@ const CuttingOperations: React.FC = () => {
                                         return farmerName ? [farmerName] : [];
                                     }
                                     // Fallback for old data or other types of cutting operations.
+                                    if (!op.moduleCuts || !Array.isArray(op.moduleCuts)) return [];
                                     const moduleIds = op.moduleCuts.map(mc => mc.moduleId);
                                     const farmerIds = moduleIds
-                                        .map(moduleId => modules.find(m => m.id === moduleId)?.farmerId)
+                                        .map(moduleId => (modules || []).find(m => m.id === moduleId)?.farmerId)
                                         .filter((id): id is string => !!id);
                                     return [...new Set(farmerIds)]
                                         .map(id => farmerMap.get(id))
                                         .filter((name): name is string => !!name);
                                 })();
                                 
-                                const allModuleDisplayTexts = op.moduleCuts.map(mc => {
+                                const allModuleDisplayTexts = (op.moduleCuts || []).map(mc => {
                                     const moduleInfo = moduleInfoMap.get(mc.moduleId);
                                     // Format: ModuleCode or shortened ID if not found
                                     return moduleInfo 

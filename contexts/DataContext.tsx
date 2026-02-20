@@ -346,36 +346,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
   
   // Keep localStorage as fallback cache
-  useEffect(() => { localStorage.setItem('sites', JSON.stringify(sites)); }, [sites]);
-  useEffect(() => { localStorage.setItem('zones', JSON.stringify(zones)); }, [zones]);
-  useEffect(() => { localStorage.setItem('employees', JSON.stringify(employees)); }, [employees]);
-  useEffect(() => { localStorage.setItem('farmers', JSON.stringify(farmers)); }, [farmers]);
-  useEffect(() => { localStorage.setItem('serviceProviders', JSON.stringify(serviceProviders)); }, [serviceProviders]);
-  useEffect(() => { localStorage.setItem('creditTypes', JSON.stringify(creditTypes)); }, [creditTypes]);
-  useEffect(() => { localStorage.setItem('farmerCredits', JSON.stringify(farmerCredits)); }, [farmerCredits]);
-  useEffect(() => { localStorage.setItem('repayments', JSON.stringify(repayments)); }, [repayments]);
-  useEffect(() => { localStorage.setItem('monthlyPayments', JSON.stringify(monthlyPayments)); }, [monthlyPayments]);
-  useEffect(() => { localStorage.setItem('seaweedTypes', JSON.stringify(seaweedTypes)); }, [seaweedTypes]);
-  useEffect(() => { localStorage.setItem('modules', JSON.stringify(modules)); }, [modules]);
-  useEffect(() => { localStorage.setItem('cultivationCycles', JSON.stringify(cultivationCycles)); }, [cultivationCycles]);
-  useEffect(() => { localStorage.setItem('stockMovements', JSON.stringify(stockMovements)); }, [stockMovements]);
-  useEffect(() => { localStorage.setItem('pressingSlips', JSON.stringify(pressingSlips)); }, [pressingSlips]);
-  useEffect(() => { localStorage.setItem('pressedStockMovements', JSON.stringify(pressedStockMovements)); }, [pressedStockMovements]);
-  useEffect(() => { localStorage.setItem('exportDocuments', JSON.stringify(exportDocuments)); }, [exportDocuments]);
-  useEffect(() => { localStorage.setItem('siteTransfers', JSON.stringify(siteTransfers)); }, [siteTransfers]);
-  useEffect(() => { localStorage.setItem('cuttingOperations', JSON.stringify(cuttingOperations)); }, [cuttingOperations]);
-  useEffect(() => { localStorage.setItem('farmerDeliveries', JSON.stringify(farmerDeliveries)); }, [farmerDeliveries]);
-  useEffect(() => { localStorage.setItem('incidents', JSON.stringify(incidents)); }, [incidents]);
-  useEffect(() => { localStorage.setItem('incidentTypes', JSON.stringify(incidentTypes)); }, [incidentTypes]);
-  useEffect(() => { localStorage.setItem('incidentSeverities', JSON.stringify(incidentSeverities)); }, [incidentSeverities]);
-  useEffect(() => { localStorage.setItem('roles', JSON.stringify(roles)); }, [roles]);
-  useEffect(() => { localStorage.setItem('periodicTests', JSON.stringify(periodicTests)); }, [periodicTests]);
-  useEffect(() => { localStorage.setItem('pestObservations', JSON.stringify(pestObservations)); }, [pestObservations]);
-  useEffect(() => { localStorage.setItem('users', JSON.stringify(users)); }, [users]);
-  useEffect(() => { localStorage.setItem('invitations', JSON.stringify(invitations)); }, [invitations]);
-  useEffect(() => { localStorage.setItem('messageLogs', JSON.stringify(messageLogs)); }, [messageLogs]);
-  useEffect(() => { localStorage.setItem('galleryPhotos', JSON.stringify(galleryPhotos)); }, [galleryPhotos]);
-
   // Seeding logic
   useEffect(() => {
     if (seedInitialized.current) return;
