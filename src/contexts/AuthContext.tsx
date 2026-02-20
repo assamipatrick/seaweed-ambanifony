@@ -38,7 +38,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Hydrate permissions on initial load
         if (roles.length > 0) {
             const role = roles.find(r => r.id === user.roleId);
-            const permissions = role ? role.permissions : [];
+            // Handle both array and object formats for permissions
+            let permissions: string[] = [];
+            if (role?.permissions) {
+              if (Array.isArray(role.permissions)) {
+                permissions = role.permissions;
+              } else if (typeof role.permissions === 'object') {
+                // Convert object format { permission: true } to array ['permission']
+                permissions = Object.entries(role.permissions)
+                  .filter(([_, value]) => value === true)
+                  .map(([key, _]) => key);
+              }
+            }
             setUserPermissions(new Set(permissions));
         }
       }
@@ -80,7 +91,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const newUser = addUser(userData, invitationToken);
       if(newUser) {
           const role = roles.find(r => r.id === newUser.roleId);
-          const permissions = role ? role.permissions : [];
+          // Handle both array and object formats for permissions
+          let permissions: string[] = [];
+          if (role?.permissions) {
+            if (Array.isArray(role.permissions)) {
+              permissions = role.permissions;
+            } else if (typeof role.permissions === 'object') {
+              // Convert object format { permission: true } to array ['permission']
+              permissions = Object.entries(role.permissions)
+                .filter(([_, value]) => value === true)
+                .map(([key, _]) => key);
+            }
+          }
           setUserPermissions(new Set(permissions));
 
           const { password: _, ...userToStore } = newUser;
