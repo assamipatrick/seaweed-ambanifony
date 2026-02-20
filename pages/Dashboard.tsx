@@ -238,7 +238,8 @@ const SitePerformanceMap: React.FC = () => {
                     }).addTo(map)
                     .bindPopup(`<b>${site.name}</b><br>${t('netProduction')}: ${production.toFixed(0)} kg`);
                 } catch (e) {
-                    console.error("Failed to parse site location", site.location);
+                    // Silently ignore sites without valid GPS coordinates
+                    console.debug("Site without valid coordinates:", site.name, site.location);
                 }
             }
         });
