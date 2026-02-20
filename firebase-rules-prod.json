@@ -1,0 +1,142 @@
+{
+  "rules": {
+    "users": {
+      "$uid": {
+        ".read": "auth != null",
+        ".write": "auth != null && (auth.uid === $uid || root.child('users').child(auth.uid).child('roleId').val() === 'admin-role-id')"
+      }
+    },
+    "sites": {
+      ".read": "auth != null",
+      "$siteId": {
+        ".write": "auth != null"
+      }
+    },
+    "employees": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "farmers": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "modules": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "cultivation_cycles": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "farmer_credits": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "incidents": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "credit_types": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "seaweed_types": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "service_providers": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "zones": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "roles": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "incident_types": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "incident_severities": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "app_settings": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "seaweed_price_history": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "export_containers": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "user_presence": {
+      "$userId": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.uid === $userId"
+      }
+    },
+    "repayments": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "monthly_payments": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "farmer_deliveries": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "stock_movements": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "pressing_slips": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "pressed_stock_movements": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "cutting_operations": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "export_documents": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "site_transfers": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "periodic_tests": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "pest_observations": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "invitations": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "message_logs": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "gallery_photos": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    }
+  }
+}
