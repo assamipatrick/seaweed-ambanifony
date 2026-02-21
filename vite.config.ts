@@ -27,6 +27,16 @@ export default defineConfig(({ mode }) => {
         alias: {
           '@': path.resolve(__dirname, '.'),
         }
+      },
+      build: {
+        rollupOptions: {
+          output: {
+            // Force new hash by including timestamp in chunk names
+            entryFileNames: `assets/[name]-[hash]-${Date.now()}.js`,
+            chunkFileNames: `assets/[name]-[hash]-${Date.now()}.js`,
+            assetFileNames: `assets/[name]-[hash]-${Date.now()}[extname]`
+          }
+        }
       }
     };
 });
