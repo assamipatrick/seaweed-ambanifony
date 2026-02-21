@@ -4,6 +4,9 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
+    // Generate unique timestamp for each build to force cache invalidation
+    const buildTimestamp = Date.now();
+    
     return {
       server: {
         port: 3000,
@@ -31,10 +34,10 @@ export default defineConfig(({ mode }) => {
       build: {
         rollupOptions: {
           output: {
-            // Force new hash by including timestamp in chunk names
-            entryFileNames: `assets/[name]-[hash]-${Date.now()}.js`,
-            chunkFileNames: `assets/[name]-[hash]-${Date.now()}.js`,
-            assetFileNames: `assets/[name]-[hash]-${Date.now()}[extname]`
+            // Use content hash only - Vite will generate unique names when content changes
+            entryFileNames: `assets/[name]-[hash].js`,
+            chunkFileNames: `assets/[name]-[hash].js`,
+            assetFileNames: `assets/[name]-[hash][extname]`
           }
         }
       }
