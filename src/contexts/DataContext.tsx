@@ -653,19 +653,20 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setModules(prev => prev.map(m => idSet.has(m.id) ? { ...m, farmerId, statusHistory: [...m.statusHistory, { status: ModuleStatus.ASSIGNED, date: new Date().toISOString(), notes: `Assigned to farmer ${farmer.firstName} ${farmer.lastName}` }] } : m));
   };
 
-  const addCultivationCycle = (cycleData: Omit<CultivationCycle, 'id'>, farmerId: string) => {
+  const addCultivationCycle = async (cycleData: Omit<CultivationCycle, 'id'>, farmerId: string) => {
     const latestCuttingOp = cycleData.cuttingOperationId ? cuttingOperations.find(op => op.id === cycleData.cuttingOperationId) : undefined;
     const module = modules.find(m => m.id === cycleData.moduleId);
     if (!module) return;
 
-    const newCycle: CultivationCycle = { 
+    const tempCycle: CultivationCycle = { 
         ...cycleData, 
         id: `cyc-${Date.now()}`,
         linesPlanted: cycleData.linesPlanted || module.lines,
-        cuttingOperationId: cycleData.cuttingOperationId || latestCuttingOp?.id // Fixed logic: prioritize cycleData.cuttingOperationId
+        cuttingOperationId: cycleData.cuttingOperationId || latestCuttingOp?.id
     };
-    setCultivationCycles(prev => [...prev, newCycle]);
-
+    
+    // Optimistic UI
+    setCultivationCycles(prev => [...prev, tempCycle]);
     const farmer = farmers.find(f => f.id === farmerId);
     setModules(prev => prev.map(m => {
         if (m.id === cycleData.moduleId) {
@@ -677,9 +678,20 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         return m;
     }));
+
+    // Firebase sync
+    const result = await firebaseService.addCultivationCycle(cycleData);
+    if (result) {
+      setCultivationCycles(prev => prev.map(c => c.id === tempCycle.id ? result : c));
+    } else {
+      // Rollback
+      setCultivationCycles(prev => prev.filter(c => c.id !== tempCycle.id));
+      // Rollback module history too
+      setModules(prev => prev.map(m => m.id === cycleData.moduleId ? module : m));
+    }
   };
 
-  const updateCultivationCycle = (cycleData: CultivationCycle) => {
+  const updateCultivationCycle = async (cycleData: CultivationCycle) => {
     let originalCycle: CultivationCycle | undefined;
     setCultivationCycles(prev => {
         originalCycle = prev.find(c => c.id === cycleData.id);
@@ -756,6 +768,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             return m;
         }));
     }
+    
+    // Firebase sync
+    await firebaseService.updateCultivationCycle(cycleData);
   };
 
   const updateMultipleCultivationCycles = (cyclesToUpdate: CultivationCycle[]) => {
@@ -781,7 +796,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const deleteCultivationCycle = (cycleId: string) => setCultivationCycles(prev => prev.filter(c => c.id !== cycleId));
+  const deleteCultivationCycle = async (cycleId: string) => {
+    setCultivationCycles(prev => prev.filter(c => c.id !== cycleId));
+    await firebaseService.deleteCultivationCycle(cycleId);
+  };
 
   const startCultivationFromCuttings = (
       cuttingData: Omit<CuttingOperation, 'id'>,
@@ -889,16 +907,25 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const pressingSlipsFunctions = {
-    addPressingSlip: (slipData: Omit<PressingSlip, 'id' | 'slipNo'>) => {
+    addPressingSlip: async (slipData: Omit<PressingSlip, 'id' | 'slipNo'>) => {
         const slipNo = `PRESS-${new Date().getFullYear()}-${String(pressingSlips.length + 1).padStart(3, '0')}`;
-        const newSlip: PressingSlip = { ...slipData, id: `ps-${Date.now()}`, slipNo };
-        setPressingSlips(prev => [...prev, newSlip]);
+        const tempSlip: PressingSlip = { ...slipData, id: `ps-${Date.now()}`, slipNo };
+        setPressingSlips(prev => [...prev, tempSlip]);
         setPressedStockMovements(prev => [...prev, 
-            { id: `psm-cons-${Date.now()}`, date: newSlip.date, siteId: 'pressing-warehouse', seaweedTypeId: newSlip.seaweedTypeId, type: PressedStockMovementType.PRESSING_CONSUMPTION, designation: `Consumed for Pressing Slip ${newSlip.slipNo}`, outKg: newSlip.consumedWeightKg, outBales: newSlip.consumedBags, relatedId: newSlip.id },
-            { id: `psm-prod-${Date.now()}`, date: newSlip.date, siteId: 'pressing-warehouse', seaweedTypeId: newSlip.seaweedTypeId, type: PressedStockMovementType.PRESSING_IN, designation: `Produced from Pressing Slip ${newSlip.slipNo}`, inBales: newSlip.producedBalesCount, inKg: newSlip.producedWeightKg, relatedId: newSlip.id }
+            { id: `psm-cons-${Date.now()}`, date: tempSlip.date, siteId: 'pressing-warehouse', seaweedTypeId: tempSlip.seaweedTypeId, type: PressedStockMovementType.PRESSING_CONSUMPTION, designation: `Consumed for Pressing Slip ${tempSlip.slipNo}`, outKg: tempSlip.consumedWeightKg, outBales: tempSlip.consumedBags, relatedId: tempSlip.id },
+            { id: `psm-prod-${Date.now()}`, date: tempSlip.date, siteId: 'pressing-warehouse', seaweedTypeId: tempSlip.seaweedTypeId, type: PressedStockMovementType.PRESSING_IN, designation: `Produced from Pressing Slip ${tempSlip.slipNo}`, inBales: tempSlip.producedBalesCount, inKg: tempSlip.producedWeightKg, relatedId: tempSlip.id }
         ]);
+        
+        // Firebase sync
+        const result = await firebaseService.addPressingSlip(tempSlip);
+        if (result) {
+          setPressingSlips(prev => prev.map(s => s.id === tempSlip.id ? result : s));
+        } else {
+          setPressingSlips(prev => prev.filter(s => s.id !== tempSlip.id));
+          setPressedStockMovements(prev => prev.filter(m => m.relatedId !== tempSlip.id));
+        }
     },
-    updatePressingSlip: (updatedSlip: PressingSlip) => {
+    updatePressingSlip: async (updatedSlip: PressingSlip) => {
         setPressingSlips(prev => prev.map(s => s.id === updatedSlip.id ? updatedSlip : s));
         setPressedStockMovements(prev => {
             const otherMovements = prev.filter(m => m.relatedId !== updatedSlip.id);
@@ -907,27 +934,57 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 { id: `psm-upd-prod-${Date.now()}`, date: updatedSlip.date, siteId: 'pressing-warehouse', seaweedTypeId: updatedSlip.seaweedTypeId, type: PressedStockMovementType.PRESSING_IN, designation: `Produced from Pressing Slip ${updatedSlip.slipNo}`, inBales: updatedSlip.producedBalesCount, inKg: updatedSlip.producedWeightKg, relatedId: updatedSlip.id }
             ];
         });
+        await firebaseService.updatePressingSlip(updatedSlip);
     },
-    deletePressingSlip: (slipId: string) => {
+    deletePressingSlip: async (slipId: string) => {
         setPressingSlips(prev => prev.filter(s => s.id !== slipId));
         setPressedStockMovements(prev => prev.filter(m => m.relatedId !== slipId));
+        await firebaseService.deletePressingSlip(slipId);
     },
-    addInitialPressedStock: (data: Omit<PressedStockMovement, 'id' | 'type' | 'relatedId'>) => setPressedStockMovements(prev => [...prev, { ...data, id: `psm-${Date.now()}`, type: PressedStockMovementType.INITIAL_STOCK }]),
-    addPressedStockAdjustment: (data: Omit<PressedStockMovement, 'id' | 'relatedId'>) => setPressedStockMovements(prev => [...prev, { ...data, id: `psm-adj-${Date.now()}`, relatedId: `adj-${Date.now()}` }])
+    addInitialPressedStock: async (data: Omit<PressedStockMovement, 'id' | 'type' | 'relatedId'>) => {
+        const temp = { ...data, id: `psm-${Date.now()}`, type: PressedStockMovementType.INITIAL_STOCK };
+        setPressedStockMovements(prev => [...prev, temp]);
+        const result = await firebaseService.addPressedStockMovement(temp);
+        if (result) {
+          setPressedStockMovements(prev => prev.map(m => m.id === temp.id ? result : m));
+        } else {
+          setPressedStockMovements(prev => prev.filter(m => m.id !== temp.id));
+        }
+    },
+    addPressedStockAdjustment: async (data: Omit<PressedStockMovement, 'id' | 'relatedId'>) => {
+        const temp = { ...data, id: `psm-adj-${Date.now()}`, relatedId: `adj-${Date.now()}` };
+        setPressedStockMovements(prev => [...prev, temp]);
+        const result = await firebaseService.addPressedStockMovement(temp);
+        if (result) {
+          setPressedStockMovements(prev => prev.map(m => m.id === temp.id ? result : m));
+        } else {
+          setPressedStockMovements(prev => prev.filter(m => m.id !== temp.id));
+        }
+    }
   };
 
   const exportDocFunctions = {
-    addExportDocument: (docData: Omit<ExportDocument, 'id' | 'docNo'>, sourceSiteId: string) => {
+    addExportDocument: async (docData: Omit<ExportDocument, 'id' | 'docNo'>, sourceSiteId: string) => {
         const docNo = `EXP-${new Date().getFullYear()}-${String(exportDocuments.length + 1).padStart(3, '0')}`;
-        const newDoc: ExportDocument = { ...docData, id: `ed-${Date.now()}`, docNo, containers: docData.containers.map(c => ({...c, id: `ec-${Date.now()}-${Math.random()}`})) };
-        setExportDocuments(prev => [...prev, newDoc]);
-        setPressingSlips(prev => prev.map(slip => newDoc.pressingSlipIds.includes(slip.id) ? { ...slip, exportDocId: newDoc.id } : slip));
-        const slipsForMovement = pressingSlips.filter(s => newDoc.pressingSlipIds.includes(s.id));
+        const tempDoc: ExportDocument = { ...docData, id: `ed-${Date.now()}`, docNo, containers: docData.containers.map(c => ({...c, id: `ec-${Date.now()}-${Math.random()}`})) };
+        setExportDocuments(prev => [...prev, tempDoc]);
+        setPressingSlips(prev => prev.map(slip => tempDoc.pressingSlipIds.includes(slip.id) ? { ...slip, exportDocId: tempDoc.id } : slip));
+        const slipsForMovement = pressingSlips.filter(s => tempDoc.pressingSlipIds.includes(s.id));
         const totalBales = slipsForMovement.reduce((sum, slip) => sum + slip.producedBalesCount, 0);
         const totalWeight = slipsForMovement.reduce((sum, slip) => sum + slip.producedWeightKg, 0);
-        if (totalBales > 0) setPressedStockMovements(prev => [...prev, { id: `psm-${Date.now()}`, date: newDoc.date, siteId: 'pressing-warehouse', seaweedTypeId: newDoc.seaweedTypeId, type: PressedStockMovementType.EXPORT_OUT, designation: `Export Shipment ${newDoc.docNo}`, outBales: totalBales, outKg: totalWeight, relatedId: newDoc.id }]);
+        if (totalBales > 0) setPressedStockMovements(prev => [...prev, { id: `psm-${Date.now()}`, date: tempDoc.date, siteId: 'pressing-warehouse', seaweedTypeId: tempDoc.seaweedTypeId, type: PressedStockMovementType.EXPORT_OUT, designation: `Export Shipment ${tempDoc.docNo}`, outBales: totalBales, outKg: totalWeight, relatedId: tempDoc.id }]);
+        
+        // Firebase sync
+        const result = await firebaseService.addExportDocument(tempDoc);
+        if (result) {
+          setExportDocuments(prev => prev.map(d => d.id === tempDoc.id ? result : d));
+        } else {
+          setExportDocuments(prev => prev.filter(d => d.id !== tempDoc.id));
+          setPressingSlips(prev => prev.map(slip => slip.exportDocId === tempDoc.id ? { ...slip, exportDocId: undefined } : slip));
+          if (totalBales > 0) setPressedStockMovements(prev => prev.filter(m => m.relatedId !== tempDoc.id));
+        }
     },
-    updateExportDocument: (updatedDoc: ExportDocument) => {
+    updateExportDocument: async (updatedDoc: ExportDocument) => {
         setExportDocuments(prev => prev.map(d => d.id === updatedDoc.id ? updatedDoc : d));
         setPressingSlips(prev => prev.map(slip => updatedDoc.pressingSlipIds.includes(slip.id) ? { ...slip, exportDocId: updatedDoc.id } : (slip.exportDocId === updatedDoc.id ? { ...slip, exportDocId: undefined } : slip)));
         const updatedMovements = pressedStockMovements.filter(m => m.relatedId !== updatedDoc.id);
@@ -936,21 +993,35 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const totalWeight = slipsForMovement.reduce((sum, s) => sum + s.producedWeightKg, 0);
         if (totalBales > 0) updatedMovements.push({ id: `psm-${Date.now()}`, date: updatedDoc.date, siteId: 'pressing-warehouse', seaweedTypeId: updatedDoc.seaweedTypeId, type: PressedStockMovementType.EXPORT_OUT, designation: `Export Shipment ${updatedDoc.docNo}`, outBales: totalBales, outKg: totalWeight, relatedId: updatedDoc.id });
         setPressedStockMovements(updatedMovements);
+        
+        // Firebase sync
+        await firebaseService.updateExportDocument(updatedDoc);
     },
-    deleteExportDocument: (docId: string) => {
+    deleteExportDocument: async (docId: string) => {
         setPressingSlips(prev => prev.map(slip => slip.exportDocId === docId ? { ...slip, exportDocId: undefined } : slip));
         setExportDocuments(prev => prev.filter(d => d.id !== docId));
         setPressedStockMovements(prev => prev.filter(m => m.relatedId !== docId));
+        
+        // Firebase sync
+        await firebaseService.deleteExportDocument(docId);
     },
   };
 
   const siteTransferFunctions = {
-    addSiteTransfer: (transferData: Omit<SiteTransfer, 'id' | 'status' | 'history'>) => {
-        const newTransfer: SiteTransfer = { ...transferData, id: `st-${Date.now()}`, status: SiteTransferStatus.AWAITING_OUTBOUND, history: [{ status: SiteTransferStatus.AWAITING_OUTBOUND, date: new Date().toISOString(), notes: 'Transfer initiated.' }] };
-        setSiteTransfers(prev => [...prev, newTransfer]);
-        addStockMovement({ date: newTransfer.date, siteId: newTransfer.sourceSiteId, seaweedTypeId: newTransfer.seaweedTypeId, type: StockMovementType.SITE_TRANSFER_OUT, designation: `Transfer to ${sites.find(s => s.id === newTransfer.destinationSiteId)?.name} (${newTransfer.id})`, outKg: newTransfer.weightKg, outBags: newTransfer.bags, relatedId: newTransfer.id });
+    addSiteTransfer: async (transferData: Omit<SiteTransfer, 'id' | 'status' | 'history'>) => {
+        const tempTransfer: SiteTransfer = { ...transferData, id: `st-${Date.now()}`, status: SiteTransferStatus.AWAITING_OUTBOUND, history: [{ status: SiteTransferStatus.AWAITING_OUTBOUND, date: new Date().toISOString(), notes: 'Transfer initiated.' }] };
+        setSiteTransfers(prev => [...prev, tempTransfer]);
+        await addStockMovement({ date: tempTransfer.date, siteId: tempTransfer.sourceSiteId, seaweedTypeId: tempTransfer.seaweedTypeId, type: StockMovementType.SITE_TRANSFER_OUT, designation: `Transfer to ${sites.find(s => s.id === tempTransfer.destinationSiteId)?.name} (${tempTransfer.id})`, outKg: tempTransfer.weightKg, outBags: tempTransfer.bags, relatedId: tempTransfer.id });
+        
+        // Firebase sync
+        const result = await firebaseService.addSiteTransfer(tempTransfer);
+        if (result) {
+          setSiteTransfers(prev => prev.map(t => t.id === tempTransfer.id ? result : t));
+        } else {
+          setSiteTransfers(prev => prev.filter(t => t.id !== tempTransfer.id));
+        }
     },
-    updateSiteTransfer: (updatedTransfer: SiteTransfer) => {
+    updateSiteTransfer: async (updatedTransfer: SiteTransfer) => {
         const original = siteTransfers.find(t => t.id === updatedTransfer.id);
         if (!original) return;
         const transfer = { ...updatedTransfer };
@@ -967,30 +1038,42 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (transfer.destinationSiteId === 'pressing-warehouse') {
                 setPressedStockMovements(prev => [...prev, { id: `psm-${Date.now()}`, date: transfer.completionDate || new Date().toISOString().split('T')[0], siteId: 'pressing-warehouse', seaweedTypeId: transfer.seaweedTypeId, type: PressedStockMovementType.BULK_IN_FROM_SITE, designation: `Transfer from ${sites.find(s => s.id === transfer.sourceSiteId)?.name} (${transfer.id})`, inKg: transfer.receivedWeightKg, inBales: transfer.receivedBags, relatedId: transfer.id }]);
             } else {
-                addStockMovement({ date: transfer.completionDate || new Date().toISOString().split('T')[0], siteId: transfer.destinationSiteId, seaweedTypeId: transfer.seaweedTypeId, type: StockMovementType.SITE_TRANSFER_IN, designation: `Transfer from ${sites.find(s => s.id === transfer.sourceSiteId)?.name} (${transfer.id})`, inKg: transfer.receivedWeightKg, inBags: transfer.receivedBags, relatedId: transfer.id });
+                await addStockMovement({ date: transfer.completionDate || new Date().toISOString().split('T')[0], siteId: transfer.destinationSiteId, seaweedTypeId: transfer.seaweedTypeId, type: StockMovementType.SITE_TRANSFER_IN, designation: `Transfer from ${sites.find(s => s.id === transfer.sourceSiteId)?.name} (${transfer.id})`, inKg: transfer.receivedWeightKg, inBags: transfer.receivedBags, relatedId: transfer.id });
             }
         }
         if (original.status !== SiteTransferStatus.CANCELLED && transfer.status === SiteTransferStatus.CANCELLED) {
-            addStockMovement({ date: transfer.completionDate || new Date().toISOString().split('T')[0], siteId: transfer.sourceSiteId, seaweedTypeId: transfer.seaweedTypeId, type: StockMovementType.SITE_TRANSFER_IN, designation: `Cancelled Transfer ${transfer.id}: ${transfer.notes || ''}`.trim(), inKg: transfer.weightKg, inBags: transfer.bags, relatedId: transfer.id });
+            await addStockMovement({ date: transfer.completionDate || new Date().toISOString().split('T')[0], siteId: transfer.sourceSiteId, seaweedTypeId: transfer.seaweedTypeId, type: StockMovementType.SITE_TRANSFER_IN, designation: `Cancelled Transfer ${transfer.id}: ${transfer.notes || ''}`.trim(), inKg: transfer.weightKg, inBags: transfer.bags, relatedId: transfer.id });
         }
+        
+        // Firebase sync
+        await firebaseService.updateSiteTransfer(transfer);
     }
   };
 
   const cuttingOpFunctions = {
-      addCuttingOperation: (operationData: Omit<CuttingOperation, 'id'>) => {
-        const newOperation: CuttingOperation = { ...operationData, id: `cut-${Date.now()}`};
+      addCuttingOperation: async (operationData: Omit<CuttingOperation, 'id'>) => {
+        const tempOperation: CuttingOperation = { ...operationData, id: `cut-${Date.now()}`};
         const newCredits: FarmerCredit[] = [];
         operationData.moduleCuts.forEach(moduleCut => {
             const module = modules.find(m => m.id === moduleCut.moduleId);
             if (module && module.farmerId) {
                 const creditAmount = moduleCut.linesCut * operationData.unitPrice;
-                if (creditAmount > 0) newCredits.push({ id: `fc-${Date.now()}-${Math.random()}`, date: operationData.date, siteId: operationData.siteId, farmerId: module.farmerId, creditTypeId: 'ct-3', totalAmount: creditAmount, relatedOperationId: newOperation.id, notes: `Cutting service for module ${module.code}` });
+                if (creditAmount > 0) newCredits.push({ id: `fc-${Date.now()}-${Math.random()}`, date: operationData.date, siteId: operationData.siteId, farmerId: module.farmerId, creditTypeId: 'ct-3', totalAmount: creditAmount, relatedOperationId: tempOperation.id, notes: `Cutting service for module ${module.code}` });
             }
         });
-        setCuttingOperations(prev => [...prev, newOperation]);
+        setCuttingOperations(prev => [...prev, tempOperation]);
         if (newCredits.length > 0) setFarmerCredits(prev => [...prev, ...newCredits]);
+        
+        // Firebase sync
+        const result = await firebaseService.addCuttingOperation(tempOperation);
+        if (result) {
+          setCuttingOperations(prev => prev.map(op => op.id === tempOperation.id ? result : op));
+        } else {
+          setCuttingOperations(prev => prev.filter(op => op.id !== tempOperation.id));
+          if (newCredits.length > 0) setFarmerCredits(prev => prev.filter(fc => !newCredits.some(nc => nc.id === fc.id)));
+        }
       },
-      updateCuttingOperation: (updatedOperation: CuttingOperation, moduleWeights?: Record<string, number>, plantingDate?: string) => {
+      updateCuttingOperation: async (updatedOperation: CuttingOperation, moduleWeights?: Record<string, number>, plantingDate?: string) => {
         const originalOperation = cuttingOperations.find(op => op.id === updatedOperation.id);
         if (!originalOperation) {
             console.error("Original operation not found for update:", updatedOperation.id);
@@ -1011,7 +1094,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     ...c,
                     moduleId: newModuleId!,
                     seaweedTypeId: updatedOperation.seaweedTypeId,
-                    plantingDate: plantingDate || updatedOperation.date, // Use passed date or fallback to op date
+                    plantingDate: plantingDate || updatedOperation.date,
                     linesPlanted: updatedOperation.moduleCuts[0]?.linesCut,
                     initialWeight: weight,
                 };
@@ -1049,7 +1132,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const farmer = farmers.find(f => f.id === updatedOperation.beneficiaryFarmerId);
             const plantingTimestamp = plantingDate || updatedOperation.date;
             setModules(prevModules => prevModules.map(m => {
-                // Free the old module
                 if (m.id === originalModuleId) {
                     const newCode = modules.find(mod=>mod.id === newModuleId)?.code || newModuleId;
                     return {
@@ -1058,7 +1140,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
                         statusHistory: [...m.statusHistory, { status: ModuleStatus.FREE, date: new Date().toISOString(), notes: `Operation moved to module ${newCode}` }]
                     };
                 }
-                // Assign and plant the new module
                 if (m.id === newModuleId) {
                      return {
                         ...m,
@@ -1072,7 +1153,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 }
                 return m;
             }));
-        } else if (newModuleId) { // Module is same, but farmer or date might have changed
+        } else if (newModuleId) {
             const farmer = farmers.find(f => f.id === updatedOperation.beneficiaryFarmerId);
             const plantingTimestamp = plantingDate || updatedOperation.date;
             setModules(prevModules => prevModules.map(m => {
@@ -1105,12 +1186,15 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 return m;
             }));
         }
+        
+        // Firebase sync
+        await firebaseService.updateCuttingOperation(updatedOperation);
       },
       updateMultipleCuttingOperations: (operationIds: string[], paymentDate: string) => {
         const idSet = new Set(operationIds);
         setCuttingOperations(prev => prev.map(op => idSet.has(op.id) ? { ...op, isPaid: true, paymentDate } : op));
       },
-      deleteCuttingOperation: (operationId: string) => {
+      deleteCuttingOperation: async (operationId: string) => {
           const opToDelete = cuttingOperations.find(op => op.id === operationId);
           if (!opToDelete) {
               console.error("Operation to delete not found:", operationId);
@@ -1137,13 +1221,31 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setCultivationCycles(prev => prev.filter(c => c.cuttingOperationId !== operationId));
           setFarmerCredits(prev => prev.filter(credit => credit.relatedOperationId !== operationId));
           setCuttingOperations(prev => prev.filter(op => op.id !== operationId));
+          
+          // Firebase sync
+          await firebaseService.deleteCuttingOperation(operationId);
       }
   };
 
   const incidentFunctions = {
-    addIncident: (incident: Omit<Incident, 'id'>) => setIncidents(prev => [...prev, { ...incident, id: `inc-${Date.now()}` }]),
-    updateIncident: (updatedIncident: Incident) => setIncidents(prev => prev.map(i => i.id === updatedIncident.id ? updatedIncident : i)),
-    deleteIncident: (incidentId: string) => setIncidents(prev => prev.filter(i => i.id !== incidentId)),
+    addIncident: async (incident: Omit<Incident, 'id'>) => {
+      const temp = { ...incident, id: `inc-${Date.now()}` };
+      setIncidents(prev => [...prev, temp]);
+      const result = await firebaseService.addIncident(incident);
+      if (result) {
+        setIncidents(prev => prev.map(i => i.id === temp.id ? result : i));
+      } else {
+        setIncidents(prev => prev.filter(i => i.id !== temp.id));
+      }
+    },
+    updateIncident: async (updatedIncident: Incident) => {
+      setIncidents(prev => prev.map(i => i.id === updatedIncident.id ? updatedIncident : i));
+      await firebaseService.updateIncident(updatedIncident);
+    },
+    deleteIncident: async (incidentId: string) => {
+      setIncidents(prev => prev.filter(i => i.id !== incidentId));
+      await firebaseService.deleteIncident(incidentId);
+    },
     addIncidentType: (type: Omit<IncidentType, 'id'>) => {
         const newId = type.name.toUpperCase().replace(/\s/g, '_');
         if (!incidentTypes.some(t => t.id === newId)) setIncidentTypes(prev => [...prev, { ...type, id: newId, isDefault: false }]);
@@ -1167,31 +1269,61 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const roleFunctions = {
-    addRole: (role: Omit<Role, 'id'>): Role | undefined => {
+    addRole: async (role: Omit<Role, 'id'>): Promise<Role | undefined> => {
         const newId = role.name.toUpperCase().replace(/\s/g, '_');
         if (roles.some(r => r.id === newId)) return undefined;
         const newRole = { ...role, id: newId, isDefault: false };
         setRoles(prev => [...prev, newRole]);
-        return newRole;
+        const result = await firebaseService.addRole(newRole);
+        if (!result) setRoles(prev => prev.filter(r => r.id !== newId));
+        return result || undefined;
     },
-    updateRole: (updatedRole: Role) => setRoles(prev => prev.map(it => it.id === updatedRole.id ? updatedRole : it)),
-    deleteRole: (roleId: string) => setRoles(prev => prev.filter(it => it.id !== roleId && !it.isDefault))
+    updateRole: async (updatedRole: Role) => {
+      setRoles(prev => prev.map(it => it.id === updatedRole.id ? updatedRole : it));
+      await firebaseService.updateRole(updatedRole);
+    },
+    deleteRole: async (roleId: string) => {
+      setRoles(prev => prev.filter(it => it.id !== roleId && !it.isDefault));
+      await firebaseService.deleteRole(roleId);
+    }
   };
 
   const periodicTestFunctions = {
-    addPeriodicTest: (test: Omit<PeriodicTest, 'id'>) => setPeriodicTests(prev => [...prev, { ...test, id: `pt-${Date.now()}` }]),
-    updatePeriodicTest: (updatedTest: PeriodicTest) => setPeriodicTests(prev => prev.map(t => t.id === updatedTest.id ? updatedTest : t)),
-    deletePeriodicTest: (testId: string) => setPeriodicTests(prev => prev.filter(t => t.id !== testId))
+    addPeriodicTest: async (test: Omit<PeriodicTest, 'id'>) => {
+      const temp = { ...test, id: `pt-${Date.now()}` };
+      setPeriodicTests(prev => [...prev, temp]);
+      const result = await firebaseService.addPeriodicTest(test);
+      if (result) {
+        setPeriodicTests(prev => prev.map(t => t.id === temp.id ? result : t));
+      } else {
+        setPeriodicTests(prev => prev.filter(t => t.id !== temp.id));
+      }
+    },
+    updatePeriodicTest: async (updatedTest: PeriodicTest) => {
+      setPeriodicTests(prev => prev.map(t => t.id === updatedTest.id ? updatedTest : t));
+      await firebaseService.updatePeriodicTest(updatedTest);
+    },
+    deletePeriodicTest: async (testId: string) => {
+      setPeriodicTests(prev => prev.filter(t => t.id !== testId));
+      await firebaseService.deletePeriodicTest(testId);
+    }
   };
 
   const findUserByEmail = (email: string): User | undefined => users.find(user => user.email.toLowerCase() === email.toLowerCase());
 
-  const addUser = (userData: Omit<User, 'id'>, invitationToken?: string): User | undefined => {
+  const addUser = async (userData: Omit<User, 'id'>, invitationToken?: string): Promise<User | undefined> => {
       if (users.some(user => user.email.toLowerCase() === userData.email.toLowerCase())) return undefined;
       if (invitationToken) setInvitations(prev => prev.map(inv => inv.token === invitationToken ? { ...inv, status: InvitationStatus.ACCEPTED } : inv));
       const newUser: User = { id: `user-${Date.now()}`, ...userData };
       setUsers(prev => [...prev, newUser]);
-      return newUser;
+      const result = await firebaseService.addUser(newUser);
+      if (result) {
+        setUsers(prev => prev.map(u => u.id === newUser.id ? result : u));
+        return result;
+      } else {
+        setUsers(prev => prev.filter(u => u.id !== newUser.id));
+        return undefined;
+      }
   };
 
   const setUserPasswordResetToken = (email: string, token: string, expires: Date): boolean => {
@@ -1217,7 +1349,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return userFound;
   };
 
-  const updateUser = (updatedUser: User) => setUsers(prev => prev.map(u => u.id === updatedUser.id ? updatedUser : u));
+  const updateUser = async (updatedUser: User) => {
+    setUsers(prev => prev.map(u => u.id === updatedUser.id ? updatedUser : u));
+    await firebaseService.updateUser(updatedUser);
+  };
 
   const markCyclesAsPaid = (cycleIds: string[], paymentRunId: string) => {
     const idSet = new Set(cycleIds);
@@ -1229,23 +1364,59 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setFarmerDeliveries(prev => prev.map(d => idSet.has(d.id) ? { ...d, paymentRunId } : d));
   };
 
-  const addInvitation = (data: Omit<Invitation, 'id' | 'token' | 'createdAt'>): Invitation => {
+  const addInvitation = async (data: Omit<Invitation, 'id' | 'token' | 'createdAt'>): Promise<Invitation> => {
     const newInvitation: Invitation = { ...data, id: `inv-${Date.now()}`, token: `inv-token-${Date.now()}-${Math.random()}`, createdAt: new Date().toISOString() };
     setInvitations(prev => [...prev, newInvitation]);
+    const result = await firebaseService.addInvitation(newInvitation);
+    if (result) {
+      setInvitations(prev => prev.map(i => i.id === newInvitation.id ? result : i));
+      return result;
+    }
     return newInvitation;
   };
 
-  const deleteInvitation = (invitationId: string) => setInvitations(prev => prev.filter(inv => inv.id !== invitationId));
+  const deleteInvitation = async (invitationId: string) => {
+    setInvitations(prev => prev.filter(inv => inv.id !== invitationId));
+    await firebaseService.deleteInvitation(invitationId);
+  };
 
   const findInvitationByToken = (token: string): Invitation | undefined => {
     const inv = invitations.find(i => i.token === token && i.status === InvitationStatus.PENDING);
     return (inv && new Date(inv.expiresAt) > new Date()) ? inv : undefined;
   };
 
-  const addMessageLog = (log: Omit<MessageLog, 'id'>) => setMessageLogs(prev => [{ ...log, id: `msg-${Date.now()}` }, ...prev]);
-  const addGalleryPhoto = (photo: Omit<GalleryPhoto, 'id'>) => setGalleryPhotos(prev => [{ ...photo, id: `photo-${Date.now()}` }, ...prev]);
-  const updateGalleryPhotoComment = (id: string, comment: string) => setGalleryPhotos(prev => prev.map(p => p.id === id ? { ...p, comment } : p));
-  const deleteGalleryPhoto = (id: string) => setGalleryPhotos(prev => prev.filter(p => p.id !== id));
+  const addMessageLog = async (log: Omit<MessageLog, 'id'>) => {
+    const temp = { ...log, id: `msg-${Date.now()}` };
+    setMessageLogs(prev => [temp, ...prev]);
+    const result = await firebaseService.addMessageLog(log);
+    if (result) {
+      setMessageLogs(prev => prev.map(m => m.id === temp.id ? result : m));
+    } else {
+      setMessageLogs(prev => prev.filter(m => m.id !== temp.id));
+    }
+  };
+  const addGalleryPhoto = async (photo: Omit<GalleryPhoto, 'id'>) => {
+    const temp = { ...photo, id: `photo-${Date.now()}` };
+    setGalleryPhotos(prev => [temp, ...prev]);
+    const result = await firebaseService.addGalleryPhoto(photo);
+    if (result) {
+      setGalleryPhotos(prev => prev.map(p => p.id === temp.id ? result : p));
+    } else {
+      setGalleryPhotos(prev => prev.filter(p => p.id !== temp.id));
+    }
+  };
+  const updateGalleryPhotoComment = async (id: string, comment: string) => {
+    const photo = galleryPhotos.find(p => p.id === id);
+    if (photo) {
+      const updated = { ...photo, comment };
+      setGalleryPhotos(prev => prev.map(p => p.id === id ? updated : p));
+      await firebaseService.updateGalleryPhoto(updated);
+    }
+  };
+  const deleteGalleryPhoto = async (id: string) => {
+    setGalleryPhotos(prev => prev.filter(p => p.id !== id));
+    await firebaseService.deleteGalleryPhoto(id);
+  };
 
   const clearAllData = () => {
       localStorage.clear();
