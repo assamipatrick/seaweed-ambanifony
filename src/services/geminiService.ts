@@ -14,15 +14,24 @@ import type {
 
 // FIX: Safely access API key to prevent "process is not defined" error in browser environments
 const apiKey = typeof process !== 'undefined' && process.env ? process.env.API_KEY : '';
-const ai = new GoogleGenAI({ apiKey });
+
+// FIX: Only initialize GoogleGenAI if API key is available (prevent crash in production)
+let ai: GoogleGenAI | null = null;
+if (apiKey) {
+    try {
+        ai = new GoogleGenAI({ apiKey });
+    } catch (error) {
+        console.warn("Failed to initialize Gemini API:", error);
+    }
+}
 
 
 // Helper to run prompt with basic text model
 async function runPrompt(prompt: string): Promise<string> {
     // FIX: Add API key check to fail gracefully.
-    if (!apiKey) {
-        console.warn("Gemini API Key is missing. Narrative generation skipped.");
-        return "API Key missing. Cannot generate narrative.";
+    if (!apiKey || !ai) {
+        console.warn("Gemini API is not configured. Narrative generation skipped.");
+        return "Gemini API not configured. Feature unavailable.";
     }
     try {
         const response = await ai.models.generateContent({
@@ -207,8 +216,8 @@ export const analyzeIncidentDescription = async (
     language: 'en' | 'fr'
 ): Promise<{ suggestedType?: string; suggestedSeverity?: string; suggestedModuleCodes?: string[] }> => {
     // FIX: Add API key check to fail gracefully.
-    if (!apiKey) {
-        console.warn("Gemini API Key is missing. Incident description analysis skipped.");
+    if (!apiKey || !ai) {
+        console.warn("Gemini API is not configured. Incident description analysis skipped.");
         return {};
     }
     const prompt = `
@@ -253,9 +262,9 @@ export const analyzeImageForPest = async (
     language: 'en' | 'fr'
 ): Promise<{ description: string; severity: string; type: string; treatments: string }> => {
     // FIX: Add API key check to fail gracefully.
-    if (!apiKey) {
-        console.warn("Gemini API Key is missing. Image analysis skipped.");
-        return { description: "API Key missing. Cannot analyze image.", severity: "LOW", type: "OTHER", treatments: "" };
+    if (!apiKey || !ai) {
+        console.warn("Gemini API is not configured. Image analysis skipped.");
+        return { description: "Gemini API not configured. Cannot analyze image.", severity: "LOW", type: "OTHER", treatments: "" };
     }
 
     const prompt = `
@@ -368,8 +377,8 @@ export const generateHarvestPrediction = async (
     language: 'en' | 'fr'
 ) => {
     // FIX: Add API key check to fail gracefully.
-    if (!apiKey) {
-        console.warn("Gemini API Key is missing. Prediction skipped.");
+    if (!apiKey || !ai) {
+        console.warn("Gemini API is not configured. Prediction skipped.");
         return null;
     }
     const simplifiedHistory = history.map(h => ({
