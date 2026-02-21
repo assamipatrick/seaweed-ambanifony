@@ -13,16 +13,23 @@ import type {
 } from '../types';
 
 // FIX: Safely access API key to prevent "process is not defined" error in browser environments
-const apiKey = typeof process !== 'undefined' && process.env ? process.env.API_KEY : '';
+// Vite exposes env vars via import.meta.env.VITE_* in production
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY || 
+               (typeof process !== 'undefined' && process.env ? process.env.API_KEY : '') ||
+               (typeof process !== 'undefined' && process.env ? process.env.GEMINI_API_KEY : '') ||
+               '';
 
 // FIX: Only initialize GoogleGenAI if API key is available (prevent crash in production)
 let ai: GoogleGenAI | null = null;
 if (apiKey) {
     try {
         ai = new GoogleGenAI({ apiKey });
+        console.log('✅ Gemini API initialized successfully');
     } catch (error) {
         console.warn("Failed to initialize Gemini API:", error);
     }
+} else {
+    console.warn('⚠️ Gemini API key not found. AI features will be disabled.');
 }
 
 
