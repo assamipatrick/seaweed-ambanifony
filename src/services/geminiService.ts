@@ -12,12 +12,9 @@ import type {
     IncidentSeverity
 } from '../types';
 
-// FIX: Safely access API key to prevent "process is not defined" error in browser environments
-// Vite exposes env vars via import.meta.env.VITE_* in production
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY || 
-               (typeof process !== 'undefined' && process.env ? process.env.API_KEY : '') ||
-               (typeof process !== 'undefined' && process.env ? process.env.GEMINI_API_KEY : '') ||
-               '';
+// TEMPORARY FIX: Hardcoded API key as Cloudflare env vars not working
+// TODO: Remove after proper environment variable configuration is fixed
+const apiKey = 'AIzaSyDyOfVl_PUF3uw7ON4n2426NSpzb6ZnlxI';
 
 // FIX: Only initialize GoogleGenAI if API key is available (prevent crash in production)
 let ai: GoogleGenAI | null = null;
