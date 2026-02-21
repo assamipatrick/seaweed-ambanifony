@@ -536,9 +536,28 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await firebaseService.updateCreditType(updatedCreditType);
   };
   const deleteCreditType = async (creditTypeId: string) => {
+    // Save old state for rollback
+    const oldCreditTypes = creditTypes;
+    const oldFarmerCredits = farmerCredits;
+    
+    // Optimistic UI - remove immediately
     setCreditTypes(prev => prev.filter(ct => ct.id !== creditTypeId));
     setFarmerCredits(prev => prev.filter(fc => fc.creditTypeId !== creditTypeId));
-    await firebaseService.deleteCreditType(creditTypeId);
+    
+    // Try to delete from Firebase
+    const success = await firebaseService.deleteCreditType(creditTypeId);
+    if (!success) {
+      // Rollback on error
+      console.error('Failed to delete credit type from Firebase, rolling back...');
+      setCreditTypes(oldCreditTypes);
+      setFarmerCredits(oldFarmerCredits);
+    } else {
+      // Also delete related farmer credits from Firebase
+      const creditsToDelete = oldFarmerCredits.filter(fc => fc.creditTypeId === creditTypeId);
+      for (const credit of creditsToDelete) {
+        await firebaseService.deleteFarmerCredit(credit.id);
+      }
+    }
   };
   const addFarmerCredit = async (credit: Omit<FarmerCredit, 'id'>) => {
     const temp = { ...credit, id: `fc-${Date.now()}` };
@@ -611,8 +630,17 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await firebaseService.updateSeaweedType(updatedType);
   };
   const deleteSeaweedType = async (seaweedTypeId: string) => {
+    // Optimistic UI - remove immediately
+    const oldSeaweedTypes = seaweedTypes;
     setSeaweedTypes(prev => prev.filter(st => st.id !== seaweedTypeId));
-    await firebaseService.deleteSeaweedType(seaweedTypeId);
+    
+    // Try to delete from Firebase
+    const success = await firebaseService.deleteSeaweedType(seaweedTypeId);
+    if (!success) {
+      // Rollback on error
+      console.error('Failed to delete seaweed type from Firebase, rolling back...');
+      setSeaweedTypes(oldSeaweedTypes);
+    }
   };
   const updateSeaweedPrices = (seaweedTypeId: string, newPrice: SeaweedPriceHistory) => {
     setSeaweedTypes(prev => prev.map(st => st.id === seaweedTypeId ? { ...st, wetPrice: newPrice.wetPrice, dryPrice: newPrice.dryPrice, priceHistory: [...st.priceHistory, newPrice] } : st));
