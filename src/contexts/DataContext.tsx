@@ -3,6 +3,7 @@ import React, { createContext, useState, useContext, useEffect, useRef } from 'r
 import type { Site, Farmer, CreditType, FarmerCredit, Employee, SeaweedType, Module, CultivationCycle, ModuleStatusHistory, StockMovement, PressingSlip, PressedStockMovement, ExportDocument, SiteTransfer, ServiceProvider, SeaweedPriceHistory, Repayment, FarmerDelivery, CuttingOperation, SiteTransferHistoryEntry, Incident, IncidentType, IncidentSeverity, PeriodicTest, Role, MonthlyPayment, TestPeriod, PestObservation, User, Invitation, MessageLog, GalleryPhoto } from '../types';
 import { ModuleStatus, StockMovementType, PressedStockMovementType, SiteTransferStatus, ExportDocType, ContainerType, IncidentStatus, RecipientType, InvitationStatus, EmployeeStatus, FarmerStatus, ServiceProviderStatus, HistoryStatus } from '../types';
 import { PERMISSIONS } from '../permissions';
+import * as firebaseService from '../../lib/firebaseService';
 
 // --- Default Seed Data ---
 const defaultIncidentTypes: IncidentType[] = [
@@ -394,49 +395,96 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [pressingSlips, seaweedTypes]);
 
-  const addSite = (site: Omit<Site, 'id'>) => setSites(prev => [...prev, { ...site, id: `site-${Date.now()}` }]);
-  const updateSite = (updatedSite: Site) => setSites(prev => prev.map(s => s.id === updatedSite.id ? updatedSite : s));
-  const deleteSite = (siteId: string) => setSites(prev => prev.filter(s => s.id !== siteId));
+  const addSite = async (site: Omit<Site, 'id'>) => {
+    const tempId = `site-${Date.now()}`;
+    const tempSite = { ...site, id: tempId };
+    // Optimistic UI update
+    setSites(prev => [...prev, tempSite]);
+    // Firebase sync
+    const result = await firebaseService.addSite(site);
+    if (result) {
+      // Replace temp with real ID
+      setSites(prev => prev.map(s => s.id === tempId ? result : s));
+    } else {
+      // Rollback on error
+      setSites(prev => prev.filter(s => s.id !== tempId));
+    }
+  };
+  const updateSite = async (updatedSite: Site) => {
+    // Optimistic UI update
+    setSites(prev => prev.map(s => s.id === updatedSite.id ? updatedSite : s));
+    // Firebase sync
+    await firebaseService.updateSite(updatedSite);
+  };
+  const deleteSite = async (siteId: string) => {
+    // Optimistic UI update
+    setSites(prev => prev.filter(s => s.id !== siteId));
+    // Firebase sync
+    await firebaseService.deleteSite(siteId);
+  };
   const getFarmersBySite = (siteId: string) => farmers.filter(f => f.siteId === siteId);
 
-  const addEmployee = (employee: Omit<Employee, 'id'>) => {
-      const newEmployee: Employee = {
+  const addEmployee = async (employee: Omit<Employee, 'id'>) => {
+      const tempEmployee: Employee = {
           ...employee,
           id: `emp-${Date.now()}`,
           status: EmployeeStatus.ACTIVE,
           hireDate: employee.hireDate || new Date().toISOString().split('T')[0]
       };
-      setEmployees(prev => [...prev, newEmployee]);
+      // Optimistic UI update
+      setEmployees(prev => [...prev, tempEmployee]);
+      // Firebase sync
+      const result = await firebaseService.addEmployee(employee);
+      if (result) {
+        setEmployees(prev => prev.map(e => e.id === tempEmployee.id ? result : e));
+      } else {
+        setEmployees(prev => prev.filter(e => e.id !== tempEmployee.id));
+      }
   };
-  const updateEmployee = (updatedEmployee: Employee) => setEmployees(prev => prev.map(e => e.id === updatedEmployee.id ? updatedEmployee : e));
-  const deleteEmployee = (employeeId: string) => {
+  const updateEmployee = async (updatedEmployee: Employee) => {
+    setEmployees(prev => prev.map(e => e.id === updatedEmployee.id ? updatedEmployee : e));
+    await firebaseService.updateEmployee(updatedEmployee);
+  };
+  const deleteEmployee = async (employeeId: string) => {
     setEmployees(prev => prev.filter(e => e.id !== employeeId));
     setSites(prevSites => prevSites.map(site => site.managerId === employeeId ? { ...site, managerId: undefined } : site));
+    await firebaseService.deleteEmployee(employeeId);
   };
-  const deleteMultipleEmployees = (employeeIds: string[]) => {
+  const deleteMultipleEmployees = async (employeeIds: string[]) => {
     const idSet = new Set(employeeIds);
     setEmployees(prev => prev.filter(e => !idSet.has(e.id)));
     setSites(prevSites => prevSites.map(site => site.managerId && idSet.has(site.managerId) ? { ...site, managerId: undefined } : site));
+    await firebaseService.deleteMultipleEmployees(employeeIds);
   };
   const updateEmployeesSite = (employeeIds: string[], siteId: string) => {
     const idSet = new Set(employeeIds);
     setEmployees(prev => prev.map(e => (idSet.has(e.id) ? { ...e, siteId } : e)));
   };
 
-  const addFarmer = (farmer: Omit<Farmer, 'id'>) => {
-    const newFarmer: Farmer = {
+  const addFarmer = async (farmer: Omit<Farmer, 'id'>) => {
+    const tempFarmer: Farmer = {
         ...farmer,
         id: `farm-${Date.now()}`,
         status: farmer.status || FarmerStatus.ACTIVE,
         joinDate: farmer.joinDate || new Date().toISOString().split('T')[0]
     };
-    setFarmers(prev => [...prev, newFarmer]);
+    setFarmers(prev => [...prev, tempFarmer]);
+    const result = await firebaseService.addFarmer(farmer);
+    if (result) {
+      setFarmers(prev => prev.map(f => f.id === tempFarmer.id ? result : f));
+    } else {
+      setFarmers(prev => prev.filter(f => f.id !== tempFarmer.id));
+    }
   };
-  const updateFarmer = (updatedFarmer: Farmer) => setFarmers(prev => prev.map(f => f.id === updatedFarmer.id ? updatedFarmer : f));
-  const deleteFarmer = (farmerId: string) => {
+  const updateFarmer = async (updatedFarmer: Farmer) => {
+    setFarmers(prev => prev.map(f => f.id === updatedFarmer.id ? updatedFarmer : f));
+    await firebaseService.updateFarmer(updatedFarmer);
+  };
+  const deleteFarmer = async (farmerId: string) => {
     setFarmers(prev => prev.filter(f => f.id !== farmerId));
     setFarmerCredits(prev => prev.filter(fc => fc.farmerId !== farmerId));
     setRepayments(prev => prev.filter(r => r.farmerId !== farmerId));
+    await firebaseService.deleteFarmer(farmerId);
   };
    const deleteMultipleFarmers = (farmerIds: string[]) => {
     const idSet = new Set(farmerIds);
@@ -449,72 +497,149 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setFarmers(prev => prev.map(f => (idSet.has(f.id) ? { ...f, siteId } : f)));
   };
 
-  const addServiceProvider = (provider: Omit<ServiceProvider, 'id'>) => {
-      const newProvider: ServiceProvider = {
+  const addServiceProvider = async (provider: Omit<ServiceProvider, 'id'>) => {
+      const tempProvider: ServiceProvider = {
           ...provider,
           id: `sp-${Date.now()}`,
           status: ServiceProviderStatus.ACTIVE,
           joinDate: provider.joinDate || new Date().toISOString().split('T')[0]
       };
-      setServiceProviders(prev => [...prev, newProvider]);
+      setServiceProviders(prev => [...prev, tempProvider]);
+      const result = await firebaseService.addServiceProvider(provider);
+      if (result) {
+        setServiceProviders(prev => prev.map(p => p.id === tempProvider.id ? result : p));
+      } else {
+        setServiceProviders(prev => prev.filter(p => p.id !== tempProvider.id));
+      }
   };
-  const updateServiceProvider = (updatedProvider: ServiceProvider) => setServiceProviders(prev => prev.map(p => p.id === updatedProvider.id ? updatedProvider : p));
-  const deleteServiceProvider = (providerId: string) => setServiceProviders(prev => prev.filter(p => p.id !== providerId));
+  const updateServiceProvider = async (updatedProvider: ServiceProvider) => {
+    setServiceProviders(prev => prev.map(p => p.id === updatedProvider.id ? updatedProvider : p));
+    await firebaseService.updateServiceProvider(updatedProvider);
+  };
+  const deleteServiceProvider = async (providerId: string) => {
+    setServiceProviders(prev => prev.filter(p => p.id !== providerId));
+    await firebaseService.deleteServiceProvider(providerId);
+  };
 
-  const addCreditType = (creditType: Omit<CreditType, 'id'>) => setCreditTypes(prev => [...prev, { ...creditType, id: `ct-${Date.now()}` }]);
-  const updateCreditType = (updatedCreditType: CreditType) => setCreditTypes(prev => prev.map(ct => ct.id === updatedCreditType.id ? updatedCreditType : ct));
-  const deleteCreditType = (creditTypeId: string) => {
+  const addCreditType = async (creditType: Omit<CreditType, 'id'>) => {
+    const temp = { ...creditType, id: `ct-${Date.now()}` };
+    setCreditTypes(prev => [...prev, temp]);
+    const result = await firebaseService.addCreditType(creditType);
+    if (result) {
+      setCreditTypes(prev => prev.map(ct => ct.id === temp.id ? result : ct));
+    } else {
+      setCreditTypes(prev => prev.filter(ct => ct.id !== temp.id));
+    }
+  };
+  const updateCreditType = async (updatedCreditType: CreditType) => {
+    setCreditTypes(prev => prev.map(ct => ct.id === updatedCreditType.id ? updatedCreditType : ct));
+    await firebaseService.updateCreditType(updatedCreditType);
+  };
+  const deleteCreditType = async (creditTypeId: string) => {
     setCreditTypes(prev => prev.filter(ct => ct.id !== creditTypeId));
     setFarmerCredits(prev => prev.filter(fc => fc.creditTypeId !== creditTypeId));
+    await firebaseService.deleteCreditType(creditTypeId);
   };
-  const addFarmerCredit = (credit: Omit<FarmerCredit, 'id'>) => setFarmerCredits(prev => [...prev, { ...credit, id: `fc-${Date.now()}` }]);
+  const addFarmerCredit = async (credit: Omit<FarmerCredit, 'id'>) => {
+    const temp = { ...credit, id: `fc-${Date.now()}` };
+    setFarmerCredits(prev => [...prev, temp]);
+    const result = await firebaseService.addFarmerCredit(credit);
+    if (result) {
+      setFarmerCredits(prev => prev.map(fc => fc.id === temp.id ? result : fc));
+    } else {
+      setFarmerCredits(prev => prev.filter(fc => fc.id !== temp.id));
+    }
+  };
   const addMultipleFarmerCredits = (credits: Omit<FarmerCredit, 'id'>[]) => {
     const newCredits = credits.map(credit => ({...credit, id: `fc-${Date.now()}-${Math.random()}`}));
     setFarmerCredits(prev => [...prev, ...newCredits]);
   };
-  const addRepayment = (repayment: Omit<Repayment, 'id'>) => setRepayments(prev => [...prev, { ...repayment, id: `rep-${Date.now()}` }]);
+  const addRepayment = async (repayment: Omit<Repayment, 'id'>) => {
+    const temp = { ...repayment, id: `rep-${Date.now()}` };
+    setRepayments(prev => [...prev, temp]);
+    const result = await firebaseService.addRepayment(repayment);
+    if (result) {
+      setRepayments(prev => prev.map(r => r.id === temp.id ? result : r));
+    } else {
+      setRepayments(prev => prev.filter(r => r.id !== temp.id));
+    }
+  };
   const addMultipleRepayments = (repayments: Omit<Repayment, 'id'>[]) => {
       const newRepayments = repayments.map(repayment => ({...repayment, id: `rep-${Date.now()}-${Math.random()}`}));
       setRepayments(prev => [...prev, ...newRepayments]);
   };
 
-  const addMonthlyPayment = (payment: Omit<MonthlyPayment, 'id'>) => {
-    const newPayment: MonthlyPayment = { ...payment, id: `pay-${Date.now()}` };
-    setMonthlyPayments(prev => [...prev, newPayment]);
+  const addMonthlyPayment = async (payment: Omit<MonthlyPayment, 'id'>) => {
+    const temp: MonthlyPayment = { ...payment, id: `pay-${Date.now()}` };
+    setMonthlyPayments(prev => [...prev, temp]);
+    const result = await firebaseService.addMonthlyPayment(payment);
+    if (result) {
+      setMonthlyPayments(prev => prev.map(p => p.id === temp.id ? result : p));
+    } else {
+      setMonthlyPayments(prev => prev.filter(p => p.id !== temp.id));
+    }
   };
   const addMultipleMonthlyPayments = (payments: Omit<MonthlyPayment, 'id'>[]) => {
     const newPayments = payments.map(p => ({ ...p, id: `pay-${Date.now()}-${Math.random()}` }));
     setMonthlyPayments(prev => [...prev, ...newPayments]);
   };
-  const updateMonthlyPayment = (updatedPayment: MonthlyPayment) => setMonthlyPayments(prev => prev.map(p => p.id === updatedPayment.id ? updatedPayment : p));
-  const deleteMonthlyPayment = (paymentId: string) => setMonthlyPayments(prev => prev.filter(p => p.id !== paymentId));
+  const updateMonthlyPayment = async (updatedPayment: MonthlyPayment) => {
+    setMonthlyPayments(prev => prev.map(p => p.id === updatedPayment.id ? updatedPayment : p));
+    await firebaseService.updateMonthlyPayment(updatedPayment);
+  };
+  const deleteMonthlyPayment = async (paymentId: string) => {
+    setMonthlyPayments(prev => prev.filter(p => p.id !== paymentId));
+    await firebaseService.deleteMonthlyPayment(paymentId);
+  };
 
-  const addSeaweedType = (seaweedType: Omit<SeaweedType, 'id' | 'priceHistory'>) => {
-    const newType: SeaweedType = {
+  const addSeaweedType = async (seaweedType: Omit<SeaweedType, 'id' | 'priceHistory'>) => {
+    const tempType: SeaweedType = {
         ...seaweedType,
         id: `st-${Date.now()}`,
         priceHistory: [{ date: new Date().toISOString().split('T')[0], wetPrice: seaweedType.wetPrice, dryPrice: seaweedType.dryPrice }],
     };
-    setSeaweedTypes(prev => [...prev, newType]);
+    setSeaweedTypes(prev => [...prev, tempType]);
+    const result = await firebaseService.addSeaweedType(seaweedType);
+    if (result) {
+      setSeaweedTypes(prev => prev.map(st => st.id === tempType.id ? result : st));
+    } else {
+      setSeaweedTypes(prev => prev.filter(st => st.id !== tempType.id));
+    }
   };
-  const updateSeaweedType = (updatedType: SeaweedType) => setSeaweedTypes(prev => prev.map(st => st.id === updatedType.id ? updatedType : st));
-  const deleteSeaweedType = (seaweedTypeId: string) => setSeaweedTypes(prev => prev.filter(st => st.id !== seaweedTypeId));
+  const updateSeaweedType = async (updatedType: SeaweedType) => {
+    setSeaweedTypes(prev => prev.map(st => st.id === updatedType.id ? updatedType : st));
+    await firebaseService.updateSeaweedType(updatedType);
+  };
+  const deleteSeaweedType = async (seaweedTypeId: string) => {
+    setSeaweedTypes(prev => prev.filter(st => st.id !== seaweedTypeId));
+    await firebaseService.deleteSeaweedType(seaweedTypeId);
+  };
   const updateSeaweedPrices = (seaweedTypeId: string, newPrice: SeaweedPriceHistory) => {
     setSeaweedTypes(prev => prev.map(st => st.id === seaweedTypeId ? { ...st, wetPrice: newPrice.wetPrice, dryPrice: newPrice.dryPrice, priceHistory: [...st.priceHistory, newPrice] } : st));
   };
 
-  const addModule = (moduleData: Omit<Module, 'id' | 'farmerId' | 'statusHistory'>) => {
-    const newModule: Module = { 
+  const addModule = async (moduleData: Omit<Module, 'id' | 'farmerId' | 'statusHistory'>) => {
+    const tempModule: Module = { 
       ...moduleData, 
       id: `mod-${Date.now()}`,
       statusHistory: [{ status: ModuleStatus.CREATED, date: new Date().toISOString() }, { status: ModuleStatus.FREE, date: new Date().toISOString(), notes: 'Module is ready for assignment.' }]
     };
-    setModules(prev => [...prev, newModule]);
+    setModules(prev => [...prev, tempModule]);
+    const result = await firebaseService.addModule(moduleData);
+    if (result) {
+      setModules(prev => prev.map(m => m.id === tempModule.id ? result : m));
+    } else {
+      setModules(prev => prev.filter(m => m.id !== tempModule.id));
+    }
   };
-  const updateModule = (moduleData: Module) => setModules(prev => prev.map(m => m.id === moduleData.id ? moduleData : m));
-  const deleteModule = (moduleId: string) => {
+  const updateModule = async (moduleData: Module) => {
+    setModules(prev => prev.map(m => m.id === moduleData.id ? moduleData : m));
+    await firebaseService.updateModule(moduleData);
+  };
+  const deleteModule = async (moduleId: string) => {
     setModules(prev => prev.filter(m => m.id !== moduleId));
     setCultivationCycles(prev => prev.filter(c => c.moduleId !== moduleId));
+    await firebaseService.deleteModule(moduleId);
   };
   const deleteMultipleModules = (moduleIds: string[]) => {
     const idSet = new Set(moduleIds);

@@ -13,14 +13,33 @@ import {
   DataSnapshot
 } from 'firebase/database';
 import type { 
-  Site, 
+  Site,
+  Zone,
   Employee, 
   Farmer, 
   ServiceProvider,
   CreditType,
   SeaweedType,
   Module,
-  CultivationCycle 
+  CultivationCycle,
+  FarmerCredit,
+  Repayment,
+  MonthlyPayment,
+  FarmerDelivery,
+  StockMovement,
+  PressingSlip,
+  PressedStockMovement,
+  CuttingOperation,
+  ExportDocument,
+  SiteTransfer,
+  Incident,
+  PeriodicTest,
+  PestObservation,
+  User,
+  Role,
+  Invitation,
+  MessageLog,
+  GalleryPhoto
 } from '../src/types';
 
 // ============= HELPER FUNCTIONS =============
@@ -534,6 +553,1089 @@ export async function deleteCultivationCycle(cycleId: string): Promise<boolean> 
     return true;
   } catch (error) {
     handleFirebaseError(error, 'deleteCultivationCycle');
+    return false;
+  }
+}
+
+// ============= ZONES =============
+
+export async function fetchZones(): Promise<Zone[]> {
+  try {
+    const zonesRef = ref(database, 'zones');
+    const snapshot = await get(zonesRef);
+    
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      return Object.keys(data).map(key => ({
+        id: key,
+        ...data[key]
+      }));
+    }
+    return [];
+  } catch (error) {
+    handleFirebaseError(error, 'fetchZones');
+    return [];
+  }
+}
+
+export async function addZone(zone: Omit<Zone, 'id'>): Promise<Zone | null> {
+  try {
+    const id = generateId();
+    const newZone = { ...zone, id };
+    const zoneRef = ref(database, `zones/${id}`);
+    
+    await set(zoneRef, newZone);
+    return newZone as Zone;
+  } catch (error) {
+    return handleFirebaseError(error, 'addZone');
+  }
+}
+
+export async function updateZone(zone: Zone): Promise<Zone | null> {
+  try {
+    const { id, ...updates } = zone;
+    const zoneRef = ref(database, `zones/${id}`);
+    
+    await update(zoneRef, updates);
+    return zone;
+  } catch (error) {
+    return handleFirebaseError(error, 'updateZone');
+  }
+}
+
+export async function deleteZone(zoneId: string): Promise<boolean> {
+  try {
+    const zoneRef = ref(database, `zones/${zoneId}`);
+    await remove(zoneRef);
+    return true;
+  } catch (error) {
+    handleFirebaseError(error, 'deleteZone');
+    return false;
+  }
+}
+
+// ============= FARMER CREDITS =============
+
+export async function fetchFarmerCredits(): Promise<FarmerCredit[]> {
+  try {
+    const creditsRef = ref(database, 'farmer_credits');
+    const snapshot = await get(creditsRef);
+    
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      return Object.keys(data).map(key => ({
+        id: key,
+        ...data[key]
+      }));
+    }
+    return [];
+  } catch (error) {
+    handleFirebaseError(error, 'fetchFarmerCredits');
+    return [];
+  }
+}
+
+export async function addFarmerCredit(credit: Omit<FarmerCredit, 'id'>): Promise<FarmerCredit | null> {
+  try {
+    const id = generateId();
+    const newCredit = { ...credit, id };
+    const creditRef = ref(database, `farmer_credits/${id}`);
+    
+    await set(creditRef, newCredit);
+    return newCredit as FarmerCredit;
+  } catch (error) {
+    return handleFirebaseError(error, 'addFarmerCredit');
+  }
+}
+
+export async function updateFarmerCredit(credit: FarmerCredit): Promise<FarmerCredit | null> {
+  try {
+    const { id, ...updates } = credit;
+    const creditRef = ref(database, `farmer_credits/${id}`);
+    
+    await update(creditRef, updates);
+    return credit;
+  } catch (error) {
+    return handleFirebaseError(error, 'updateFarmerCredit');
+  }
+}
+
+export async function deleteFarmerCredit(creditId: string): Promise<boolean> {
+  try {
+    const creditRef = ref(database, `farmer_credits/${creditId}`);
+    await remove(creditRef);
+    return true;
+  } catch (error) {
+    handleFirebaseError(error, 'deleteFarmerCredit');
+    return false;
+  }
+}
+
+// ============= REPAYMENTS =============
+
+export async function fetchRepayments(): Promise<Repayment[]> {
+  try {
+    const repaymentsRef = ref(database, 'repayments');
+    const snapshot = await get(repaymentsRef);
+    
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      return Object.keys(data).map(key => ({
+        id: key,
+        ...data[key]
+      }));
+    }
+    return [];
+  } catch (error) {
+    handleFirebaseError(error, 'fetchRepayments');
+    return [];
+  }
+}
+
+export async function addRepayment(repayment: Omit<Repayment, 'id'>): Promise<Repayment | null> {
+  try {
+    const id = generateId();
+    const newRepayment = { ...repayment, id };
+    const repaymentRef = ref(database, `repayments/${id}`);
+    
+    await set(repaymentRef, newRepayment);
+    return newRepayment as Repayment;
+  } catch (error) {
+    return handleFirebaseError(error, 'addRepayment');
+  }
+}
+
+export async function updateRepayment(repayment: Repayment): Promise<Repayment | null> {
+  try {
+    const { id, ...updates } = repayment;
+    const repaymentRef = ref(database, `repayments/${id}`);
+    
+    await update(repaymentRef, updates);
+    return repayment;
+  } catch (error) {
+    return handleFirebaseError(error, 'updateRepayment');
+  }
+}
+
+export async function deleteRepayment(repaymentId: string): Promise<boolean> {
+  try {
+    const repaymentRef = ref(database, `repayments/${repaymentId}`);
+    await remove(repaymentRef);
+    return true;
+  } catch (error) {
+    handleFirebaseError(error, 'deleteRepayment');
+    return false;
+  }
+}
+
+// ============= MONTHLY PAYMENTS =============
+
+export async function fetchMonthlyPayments(): Promise<MonthlyPayment[]> {
+  try {
+    const paymentsRef = ref(database, 'monthly_payments');
+    const snapshot = await get(paymentsRef);
+    
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      return Object.keys(data).map(key => ({
+        id: key,
+        ...data[key]
+      }));
+    }
+    return [];
+  } catch (error) {
+    handleFirebaseError(error, 'fetchMonthlyPayments');
+    return [];
+  }
+}
+
+export async function addMonthlyPayment(payment: Omit<MonthlyPayment, 'id'>): Promise<MonthlyPayment | null> {
+  try {
+    const id = generateId();
+    const newPayment = { ...payment, id };
+    const paymentRef = ref(database, `monthly_payments/${id}`);
+    
+    await set(paymentRef, newPayment);
+    return newPayment as MonthlyPayment;
+  } catch (error) {
+    return handleFirebaseError(error, 'addMonthlyPayment');
+  }
+}
+
+export async function updateMonthlyPayment(payment: MonthlyPayment): Promise<MonthlyPayment | null> {
+  try {
+    const { id, ...updates } = payment;
+    const paymentRef = ref(database, `monthly_payments/${id}`);
+    
+    await update(paymentRef, updates);
+    return payment;
+  } catch (error) {
+    return handleFirebaseError(error, 'updateMonthlyPayment');
+  }
+}
+
+export async function deleteMonthlyPayment(paymentId: string): Promise<boolean> {
+  try {
+    const paymentRef = ref(database, `monthly_payments/${paymentId}`);
+    await remove(paymentRef);
+    return true;
+  } catch (error) {
+    handleFirebaseError(error, 'deleteMonthlyPayment');
+    return false;
+  }
+}
+
+// ============= FARMER DELIVERIES =============
+
+export async function fetchFarmerDeliveries(): Promise<FarmerDelivery[]> {
+  try {
+    const deliveriesRef = ref(database, 'farmer_deliveries');
+    const snapshot = await get(deliveriesRef);
+    
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      return Object.keys(data).map(key => ({
+        id: key,
+        ...data[key]
+      }));
+    }
+    return [];
+  } catch (error) {
+    handleFirebaseError(error, 'fetchFarmerDeliveries');
+    return [];
+  }
+}
+
+export async function addFarmerDelivery(delivery: Omit<FarmerDelivery, 'id'>): Promise<FarmerDelivery | null> {
+  try {
+    const id = generateId();
+    const newDelivery = { ...delivery, id };
+    const deliveryRef = ref(database, `farmer_deliveries/${id}`);
+    
+    await set(deliveryRef, newDelivery);
+    return newDelivery as FarmerDelivery;
+  } catch (error) {
+    return handleFirebaseError(error, 'addFarmerDelivery');
+  }
+}
+
+export async function updateFarmerDelivery(delivery: FarmerDelivery): Promise<FarmerDelivery | null> {
+  try {
+    const { id, ...updates } = delivery;
+    const deliveryRef = ref(database, `farmer_deliveries/${id}`);
+    
+    await update(deliveryRef, updates);
+    return delivery;
+  } catch (error) {
+    return handleFirebaseError(error, 'updateFarmerDelivery');
+  }
+}
+
+export async function deleteFarmerDelivery(deliveryId: string): Promise<boolean> {
+  try {
+    const deliveryRef = ref(database, `farmer_deliveries/${deliveryId}`);
+    await remove(deliveryRef);
+    return true;
+  } catch (error) {
+    handleFirebaseError(error, 'deleteFarmerDelivery');
+    return false;
+  }
+}
+
+// ============= STOCK MOVEMENTS =============
+
+export async function fetchStockMovements(): Promise<StockMovement[]> {
+  try {
+    const movementsRef = ref(database, 'stock_movements');
+    const snapshot = await get(movementsRef);
+    
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      return Object.keys(data).map(key => ({
+        id: key,
+        ...data[key]
+      }));
+    }
+    return [];
+  } catch (error) {
+    handleFirebaseError(error, 'fetchStockMovements');
+    return [];
+  }
+}
+
+export async function addStockMovement(movement: Omit<StockMovement, 'id'>): Promise<StockMovement | null> {
+  try {
+    const id = generateId();
+    const newMovement = { ...movement, id };
+    const movementRef = ref(database, `stock_movements/${id}`);
+    
+    await set(movementRef, newMovement);
+    return newMovement as StockMovement;
+  } catch (error) {
+    return handleFirebaseError(error, 'addStockMovement');
+  }
+}
+
+export async function updateStockMovement(movement: StockMovement): Promise<StockMovement | null> {
+  try {
+    const { id, ...updates } = movement;
+    const movementRef = ref(database, `stock_movements/${id}`);
+    
+    await update(movementRef, updates);
+    return movement;
+  } catch (error) {
+    return handleFirebaseError(error, 'updateStockMovement');
+  }
+}
+
+export async function deleteStockMovement(movementId: string): Promise<boolean> {
+  try {
+    const movementRef = ref(database, `stock_movements/${movementId}`);
+    await remove(movementRef);
+    return true;
+  } catch (error) {
+    handleFirebaseError(error, 'deleteStockMovement');
+    return false;
+  }
+}
+
+// ============= PRESSING SLIPS =============
+
+export async function fetchPressingSlips(): Promise<PressingSlip[]> {
+  try {
+    const slipsRef = ref(database, 'pressing_slips');
+    const snapshot = await get(slipsRef);
+    
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      return Object.keys(data).map(key => ({
+        id: key,
+        ...data[key]
+      }));
+    }
+    return [];
+  } catch (error) {
+    handleFirebaseError(error, 'fetchPressingSlips');
+    return [];
+  }
+}
+
+export async function addPressingSlip(slip: Omit<PressingSlip, 'id'>): Promise<PressingSlip | null> {
+  try {
+    const id = generateId();
+    const newSlip = { ...slip, id };
+    const slipRef = ref(database, `pressing_slips/${id}`);
+    
+    await set(slipRef, newSlip);
+    return newSlip as PressingSlip;
+  } catch (error) {
+    return handleFirebaseError(error, 'addPressingSlip');
+  }
+}
+
+export async function updatePressingSlip(slip: PressingSlip): Promise<PressingSlip | null> {
+  try {
+    const { id, ...updates } = slip;
+    const slipRef = ref(database, `pressing_slips/${id}`);
+    
+    await update(slipRef, updates);
+    return slip;
+  } catch (error) {
+    return handleFirebaseError(error, 'updatePressingSlip');
+  }
+}
+
+export async function deletePressingSlip(slipId: string): Promise<boolean> {
+  try {
+    const slipRef = ref(database, `pressing_slips/${slipId}`);
+    await remove(slipRef);
+    return true;
+  } catch (error) {
+    handleFirebaseError(error, 'deletePressingSlip');
+    return false;
+  }
+}
+
+// ============= PRESSED STOCK MOVEMENTS =============
+
+export async function fetchPressedStockMovements(): Promise<PressedStockMovement[]> {
+  try {
+    const movementsRef = ref(database, 'pressed_stock_movements');
+    const snapshot = await get(movementsRef);
+    
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      return Object.keys(data).map(key => ({
+        id: key,
+        ...data[key]
+      }));
+    }
+    return [];
+  } catch (error) {
+    handleFirebaseError(error, 'fetchPressedStockMovements');
+    return [];
+  }
+}
+
+export async function addPressedStockMovement(movement: Omit<PressedStockMovement, 'id'>): Promise<PressedStockMovement | null> {
+  try {
+    const id = generateId();
+    const newMovement = { ...movement, id };
+    const movementRef = ref(database, `pressed_stock_movements/${id}`);
+    
+    await set(movementRef, newMovement);
+    return newMovement as PressedStockMovement;
+  } catch (error) {
+    return handleFirebaseError(error, 'addPressedStockMovement');
+  }
+}
+
+export async function updatePressedStockMovement(movement: PressedStockMovement): Promise<PressedStockMovement | null> {
+  try {
+    const { id, ...updates } = movement;
+    const movementRef = ref(database, `pressed_stock_movements/${id}`);
+    
+    await update(movementRef, updates);
+    return movement;
+  } catch (error) {
+    return handleFirebaseError(error, 'updatePressedStockMovement');
+  }
+}
+
+export async function deletePressedStockMovement(movementId: string): Promise<boolean> {
+  try {
+    const movementRef = ref(database, `pressed_stock_movements/${movementId}`);
+    await remove(movementRef);
+    return true;
+  } catch (error) {
+    handleFirebaseError(error, 'deletePressedStockMovement');
+    return false;
+  }
+}
+
+// ============= CUTTING OPERATIONS =============
+
+export async function fetchCuttingOperations(): Promise<CuttingOperation[]> {
+  try {
+    const operationsRef = ref(database, 'cutting_operations');
+    const snapshot = await get(operationsRef);
+    
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      return Object.keys(data).map(key => ({
+        id: key,
+        ...data[key]
+      }));
+    }
+    return [];
+  } catch (error) {
+    handleFirebaseError(error, 'fetchCuttingOperations');
+    return [];
+  }
+}
+
+export async function addCuttingOperation(operation: Omit<CuttingOperation, 'id'>): Promise<CuttingOperation | null> {
+  try {
+    const id = generateId();
+    const newOperation = { ...operation, id };
+    const operationRef = ref(database, `cutting_operations/${id}`);
+    
+    await set(operationRef, newOperation);
+    return newOperation as CuttingOperation;
+  } catch (error) {
+    return handleFirebaseError(error, 'addCuttingOperation');
+  }
+}
+
+export async function updateCuttingOperation(operation: CuttingOperation): Promise<CuttingOperation | null> {
+  try {
+    const { id, ...updates } = operation;
+    const operationRef = ref(database, `cutting_operations/${id}`);
+    
+    await update(operationRef, updates);
+    return operation;
+  } catch (error) {
+    return handleFirebaseError(error, 'updateCuttingOperation');
+  }
+}
+
+export async function deleteCuttingOperation(operationId: string): Promise<boolean> {
+  try {
+    const operationRef = ref(database, `cutting_operations/${operationId}`);
+    await remove(operationRef);
+    return true;
+  } catch (error) {
+    handleFirebaseError(error, 'deleteCuttingOperation');
+    return false;
+  }
+}
+
+// ============= EXPORT DOCUMENTS =============
+
+export async function fetchExportDocuments(): Promise<ExportDocument[]> {
+  try {
+    const docsRef = ref(database, 'export_documents');
+    const snapshot = await get(docsRef);
+    
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      return Object.keys(data).map(key => ({
+        id: key,
+        ...data[key]
+      }));
+    }
+    return [];
+  } catch (error) {
+    handleFirebaseError(error, 'fetchExportDocuments');
+    return [];
+  }
+}
+
+export async function addExportDocument(doc: Omit<ExportDocument, 'id'>): Promise<ExportDocument | null> {
+  try {
+    const id = generateId();
+    const newDoc = { ...doc, id };
+    const docRef = ref(database, `export_documents/${id}`);
+    
+    await set(docRef, newDoc);
+    return newDoc as ExportDocument;
+  } catch (error) {
+    return handleFirebaseError(error, 'addExportDocument');
+  }
+}
+
+export async function updateExportDocument(doc: ExportDocument): Promise<ExportDocument | null> {
+  try {
+    const { id, ...updates } = doc;
+    const docRef = ref(database, `export_documents/${id}`);
+    
+    await update(docRef, updates);
+    return doc;
+  } catch (error) {
+    return handleFirebaseError(error, 'updateExportDocument');
+  }
+}
+
+export async function deleteExportDocument(docId: string): Promise<boolean> {
+  try {
+    const docRef = ref(database, `export_documents/${docId}`);
+    await remove(docRef);
+    return true;
+  } catch (error) {
+    handleFirebaseError(error, 'deleteExportDocument');
+    return false;
+  }
+}
+
+// ============= SITE TRANSFERS =============
+
+export async function fetchSiteTransfers(): Promise<SiteTransfer[]> {
+  try {
+    const transfersRef = ref(database, 'site_transfers');
+    const snapshot = await get(transfersRef);
+    
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      return Object.keys(data).map(key => ({
+        id: key,
+        ...data[key]
+      }));
+    }
+    return [];
+  } catch (error) {
+    handleFirebaseError(error, 'fetchSiteTransfers');
+    return [];
+  }
+}
+
+export async function addSiteTransfer(transfer: Omit<SiteTransfer, 'id'>): Promise<SiteTransfer | null> {
+  try {
+    const id = generateId();
+    const newTransfer = { ...transfer, id };
+    const transferRef = ref(database, `site_transfers/${id}`);
+    
+    await set(transferRef, newTransfer);
+    return newTransfer as SiteTransfer;
+  } catch (error) {
+    return handleFirebaseError(error, 'addSiteTransfer');
+  }
+}
+
+export async function updateSiteTransfer(transfer: SiteTransfer): Promise<SiteTransfer | null> {
+  try {
+    const { id, ...updates } = transfer;
+    const transferRef = ref(database, `site_transfers/${id}`);
+    
+    await update(transferRef, updates);
+    return transfer;
+  } catch (error) {
+    return handleFirebaseError(error, 'updateSiteTransfer');
+  }
+}
+
+export async function deleteSiteTransfer(transferId: string): Promise<boolean> {
+  try {
+    const transferRef = ref(database, `site_transfers/${transferId}`);
+    await remove(transferRef);
+    return true;
+  } catch (error) {
+    handleFirebaseError(error, 'deleteSiteTransfer');
+    return false;
+  }
+}
+
+// ============= INCIDENTS =============
+
+export async function fetchIncidents(): Promise<Incident[]> {
+  try {
+    const incidentsRef = ref(database, 'incidents');
+    const snapshot = await get(incidentsRef);
+    
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      return Object.keys(data).map(key => ({
+        id: key,
+        ...data[key]
+      }));
+    }
+    return [];
+  } catch (error) {
+    handleFirebaseError(error, 'fetchIncidents');
+    return [];
+  }
+}
+
+export async function addIncident(incident: Omit<Incident, 'id'>): Promise<Incident | null> {
+  try {
+    const id = generateId();
+    const newIncident = { ...incident, id };
+    const incidentRef = ref(database, `incidents/${id}`);
+    
+    await set(incidentRef, newIncident);
+    return newIncident as Incident;
+  } catch (error) {
+    return handleFirebaseError(error, 'addIncident');
+  }
+}
+
+export async function updateIncident(incident: Incident): Promise<Incident | null> {
+  try {
+    const { id, ...updates } = incident;
+    const incidentRef = ref(database, `incidents/${id}`);
+    
+    await update(incidentRef, updates);
+    return incident;
+  } catch (error) {
+    return handleFirebaseError(error, 'updateIncident');
+  }
+}
+
+export async function deleteIncident(incidentId: string): Promise<boolean> {
+  try {
+    const incidentRef = ref(database, `incidents/${incidentId}`);
+    await remove(incidentRef);
+    return true;
+  } catch (error) {
+    handleFirebaseError(error, 'deleteIncident');
+    return false;
+  }
+}
+
+// ============= PERIODIC TESTS =============
+
+export async function fetchPeriodicTests(): Promise<PeriodicTest[]> {
+  try {
+    const testsRef = ref(database, 'periodic_tests');
+    const snapshot = await get(testsRef);
+    
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      return Object.keys(data).map(key => ({
+        id: key,
+        ...data[key]
+      }));
+    }
+    return [];
+  } catch (error) {
+    handleFirebaseError(error, 'fetchPeriodicTests');
+    return [];
+  }
+}
+
+export async function addPeriodicTest(test: Omit<PeriodicTest, 'id'>): Promise<PeriodicTest | null> {
+  try {
+    const id = generateId();
+    const newTest = { ...test, id };
+    const testRef = ref(database, `periodic_tests/${id}`);
+    
+    await set(testRef, newTest);
+    return newTest as PeriodicTest;
+  } catch (error) {
+    return handleFirebaseError(error, 'addPeriodicTest');
+  }
+}
+
+export async function updatePeriodicTest(test: PeriodicTest): Promise<PeriodicTest | null> {
+  try {
+    const { id, ...updates } = test;
+    const testRef = ref(database, `periodic_tests/${id}`);
+    
+    await update(testRef, updates);
+    return test;
+  } catch (error) {
+    return handleFirebaseError(error, 'updatePeriodicTest');
+  }
+}
+
+export async function deletePeriodicTest(testId: string): Promise<boolean> {
+  try {
+    const testRef = ref(database, `periodic_tests/${testId}`);
+    await remove(testRef);
+    return true;
+  } catch (error) {
+    handleFirebaseError(error, 'deletePeriodicTest');
+    return false;
+  }
+}
+
+// ============= PEST OBSERVATIONS =============
+
+export async function fetchPestObservations(): Promise<PestObservation[]> {
+  try {
+    const observationsRef = ref(database, 'pest_observations');
+    const snapshot = await get(observationsRef);
+    
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      return Object.keys(data).map(key => ({
+        id: key,
+        ...data[key]
+      }));
+    }
+    return [];
+  } catch (error) {
+    handleFirebaseError(error, 'fetchPestObservations');
+    return [];
+  }
+}
+
+export async function addPestObservation(observation: Omit<PestObservation, 'id'>): Promise<PestObservation | null> {
+  try {
+    const id = generateId();
+    const newObservation = { ...observation, id };
+    const observationRef = ref(database, `pest_observations/${id}`);
+    
+    await set(observationRef, newObservation);
+    return newObservation as PestObservation;
+  } catch (error) {
+    return handleFirebaseError(error, 'addPestObservation');
+  }
+}
+
+export async function updatePestObservation(observation: PestObservation): Promise<PestObservation | null> {
+  try {
+    const { id, ...updates } = observation;
+    const observationRef = ref(database, `pest_observations/${id}`);
+    
+    await update(observationRef, updates);
+    return observation;
+  } catch (error) {
+    return handleFirebaseError(error, 'updatePestObservation');
+  }
+}
+
+export async function deletePestObservation(observationId: string): Promise<boolean> {
+  try {
+    const observationRef = ref(database, `pest_observations/${observationId}`);
+    await remove(observationRef);
+    return true;
+  } catch (error) {
+    handleFirebaseError(error, 'deletePestObservation');
+    return false;
+  }
+}
+
+// ============= USERS =============
+
+export async function fetchUsers(): Promise<User[]> {
+  try {
+    const usersRef = ref(database, 'users');
+    const snapshot = await get(usersRef);
+    
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      return Object.keys(data).map(key => ({
+        id: key,
+        ...data[key]
+      }));
+    }
+    return [];
+  } catch (error) {
+    handleFirebaseError(error, 'fetchUsers');
+    return [];
+  }
+}
+
+export async function addUser(user: Omit<User, 'id'>): Promise<User | null> {
+  try {
+    const id = generateId();
+    const newUser = { ...user, id };
+    const userRef = ref(database, `users/${id}`);
+    
+    await set(userRef, newUser);
+    return newUser as User;
+  } catch (error) {
+    return handleFirebaseError(error, 'addUser');
+  }
+}
+
+export async function updateUser(user: User): Promise<User | null> {
+  try {
+    const { id, ...updates } = user;
+    const userRef = ref(database, `users/${id}`);
+    
+    await update(userRef, updates);
+    return user;
+  } catch (error) {
+    return handleFirebaseError(error, 'updateUser');
+  }
+}
+
+export async function deleteUser(userId: string): Promise<boolean> {
+  try {
+    const userRef = ref(database, `users/${userId}`);
+    await remove(userRef);
+    return true;
+  } catch (error) {
+    handleFirebaseError(error, 'deleteUser');
+    return false;
+  }
+}
+
+// ============= ROLES =============
+
+export async function fetchRoles(): Promise<Role[]> {
+  try {
+    const rolesRef = ref(database, 'roles');
+    const snapshot = await get(rolesRef);
+    
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      return Object.keys(data).map(key => ({
+        id: key,
+        ...data[key]
+      }));
+    }
+    return [];
+  } catch (error) {
+    handleFirebaseError(error, 'fetchRoles');
+    return [];
+  }
+}
+
+export async function addRole(role: Omit<Role, 'id'>): Promise<Role | null> {
+  try {
+    const id = generateId();
+    const newRole = { ...role, id };
+    const roleRef = ref(database, `roles/${id}`);
+    
+    await set(roleRef, newRole);
+    return newRole as Role;
+  } catch (error) {
+    return handleFirebaseError(error, 'addRole');
+  }
+}
+
+export async function updateRole(role: Role): Promise<Role | null> {
+  try {
+    const { id, ...updates } = role;
+    const roleRef = ref(database, `roles/${id}`);
+    
+    await update(roleRef, updates);
+    return role;
+  } catch (error) {
+    return handleFirebaseError(error, 'updateRole');
+  }
+}
+
+export async function deleteRole(roleId: string): Promise<boolean> {
+  try {
+    const roleRef = ref(database, `roles/${roleId}`);
+    await remove(roleRef);
+    return true;
+  } catch (error) {
+    handleFirebaseError(error, 'deleteRole');
+    return false;
+  }
+}
+
+// ============= INVITATIONS =============
+
+export async function fetchInvitations(): Promise<Invitation[]> {
+  try {
+    const invitationsRef = ref(database, 'invitations');
+    const snapshot = await get(invitationsRef);
+    
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      return Object.keys(data).map(key => ({
+        id: key,
+        ...data[key]
+      }));
+    }
+    return [];
+  } catch (error) {
+    handleFirebaseError(error, 'fetchInvitations');
+    return [];
+  }
+}
+
+export async function addInvitation(invitation: Omit<Invitation, 'id'>): Promise<Invitation | null> {
+  try {
+    const id = generateId();
+    const newInvitation = { ...invitation, id };
+    const invitationRef = ref(database, `invitations/${id}`);
+    
+    await set(invitationRef, newInvitation);
+    return newInvitation as Invitation;
+  } catch (error) {
+    return handleFirebaseError(error, 'addInvitation');
+  }
+}
+
+export async function updateInvitation(invitation: Invitation): Promise<Invitation | null> {
+  try {
+    const { id, ...updates } = invitation;
+    const invitationRef = ref(database, `invitations/${id}`);
+    
+    await update(invitationRef, updates);
+    return invitation;
+  } catch (error) {
+    return handleFirebaseError(error, 'updateInvitation');
+  }
+}
+
+export async function deleteInvitation(invitationId: string): Promise<boolean> {
+  try {
+    const invitationRef = ref(database, `invitations/${invitationId}`);
+    await remove(invitationRef);
+    return true;
+  } catch (error) {
+    handleFirebaseError(error, 'deleteInvitation');
+    return false;
+  }
+}
+
+// ============= MESSAGE LOGS =============
+
+export async function fetchMessageLogs(): Promise<MessageLog[]> {
+  try {
+    const logsRef = ref(database, 'message_logs');
+    const snapshot = await get(logsRef);
+    
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      return Object.keys(data).map(key => ({
+        id: key,
+        ...data[key]
+      }));
+    }
+    return [];
+  } catch (error) {
+    handleFirebaseError(error, 'fetchMessageLogs');
+    return [];
+  }
+}
+
+export async function addMessageLog(log: Omit<MessageLog, 'id'>): Promise<MessageLog | null> {
+  try {
+    const id = generateId();
+    const newLog = { ...log, id };
+    const logRef = ref(database, `message_logs/${id}`);
+    
+    await set(logRef, newLog);
+    return newLog as MessageLog;
+  } catch (error) {
+    return handleFirebaseError(error, 'addMessageLog');
+  }
+}
+
+export async function updateMessageLog(log: MessageLog): Promise<MessageLog | null> {
+  try {
+    const { id, ...updates } = log;
+    const logRef = ref(database, `message_logs/${id}`);
+    
+    await update(logRef, updates);
+    return log;
+  } catch (error) {
+    return handleFirebaseError(error, 'updateMessageLog');
+  }
+}
+
+export async function deleteMessageLog(logId: string): Promise<boolean> {
+  try {
+    const logRef = ref(database, `message_logs/${logId}`);
+    await remove(logRef);
+    return true;
+  } catch (error) {
+    handleFirebaseError(error, 'deleteMessageLog');
+    return false;
+  }
+}
+
+// ============= GALLERY PHOTOS =============
+
+export async function fetchGalleryPhotos(): Promise<GalleryPhoto[]> {
+  try {
+    const photosRef = ref(database, 'gallery_photos');
+    const snapshot = await get(photosRef);
+    
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+      return Object.keys(data).map(key => ({
+        id: key,
+        ...data[key]
+      }));
+    }
+    return [];
+  } catch (error) {
+    handleFirebaseError(error, 'fetchGalleryPhotos');
+    return [];
+  }
+}
+
+export async function addGalleryPhoto(photo: Omit<GalleryPhoto, 'id'>): Promise<GalleryPhoto | null> {
+  try {
+    const id = generateId();
+    const newPhoto = { ...photo, id };
+    const photoRef = ref(database, `gallery_photos/${id}`);
+    
+    await set(photoRef, newPhoto);
+    return newPhoto as GalleryPhoto;
+  } catch (error) {
+    return handleFirebaseError(error, 'addGalleryPhoto');
+  }
+}
+
+export async function updateGalleryPhoto(photo: GalleryPhoto): Promise<GalleryPhoto | null> {
+  try {
+    const { id, ...updates } = photo;
+    const photoRef = ref(database, `gallery_photos/${id}`);
+    
+    await update(photoRef, updates);
+    return photo;
+  } catch (error) {
+    return handleFirebaseError(error, 'updateGalleryPhoto');
+  }
+}
+
+export async function deleteGalleryPhoto(photoId: string): Promise<boolean> {
+  try {
+    const photoRef = ref(database, `gallery_photos/${photoId}`);
+    await remove(photoRef);
+    return true;
+  } catch (error) {
+    handleFirebaseError(error, 'deleteGalleryPhoto');
     return false;
   }
 }
