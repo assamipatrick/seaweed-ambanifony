@@ -4,6 +4,7 @@ import type { Site, Farmer, CreditType, FarmerCredit, Employee, SeaweedType, Mod
 import { ModuleStatus, StockMovementType, PressedStockMovementType, SiteTransferStatus, ExportDocType, ContainerType, IncidentStatus, RecipientType, InvitationStatus, EmployeeStatus, FarmerStatus, ServiceProviderStatus, HistoryStatus } from '../types';
 import { PERMISSIONS } from '../permissions';
 import * as firebaseService from '../../lib/firebaseService';
+import { useFirebaseSync } from '../../hooks/useFirebaseSync';
 
 // --- Default Seed Data ---
 const defaultIncidentTypes: IncidentType[] = [
@@ -325,6 +326,40 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => { localStorage.setItem('invitations', JSON.stringify(invitations)); }, [invitations]);
   useEffect(() => { localStorage.setItem('messageLogs', JSON.stringify(messageLogs)); }, [messageLogs]);
   useEffect(() => { localStorage.setItem('galleryPhotos', JSON.stringify(galleryPhotos)); }, [galleryPhotos]);
+
+  // Firebase Real-time Synchronization for ALL 27 collections
+  useFirebaseSync({
+    collections: [
+      { collectionName: 'sites', data: sites, setData: setSites },
+      { collectionName: 'employees', data: employees, setData: setEmployees },
+      { collectionName: 'farmers', data: farmers, setData: setFarmers },
+      { collectionName: 'service_providers', data: serviceProviders, setData: setServiceProviders },
+      { collectionName: 'credit_types', data: creditTypes, setData: setCreditTypes },
+      { collectionName: 'farmer_credits', data: farmerCredits, setData: setFarmerCredits },
+      { collectionName: 'repayments', data: repayments, setData: setRepayments },
+      { collectionName: 'monthly_payments', data: monthlyPayments, setData: setMonthlyPayments },
+      { collectionName: 'seaweed_types', data: seaweedTypes, setData: setSeaweedTypes },
+      { collectionName: 'modules', data: modules, setData: setModules },
+      { collectionName: 'cultivation_cycles', data: cultivationCycles, setData: setCultivationCycles },
+      { collectionName: 'stock_movements', data: stockMovements, setData: setStockMovements },
+      { collectionName: 'pressing_slips', data: pressingSlips, setData: setPressingSlips },
+      { collectionName: 'pressed_stock_movements', data: pressedStockMovements, setData: setPressedStockMovements },
+      { collectionName: 'export_documents', data: exportDocuments, setData: setExportDocuments },
+      { collectionName: 'site_transfers', data: siteTransfers, setData: setSiteTransfers },
+      { collectionName: 'cutting_operations', data: cuttingOperations, setData: setCuttingOperations },
+      { collectionName: 'farmer_deliveries', data: farmerDeliveries, setData: setFarmerDeliveries },
+      { collectionName: 'incidents', data: incidents, setData: setIncidents },
+      { collectionName: 'incident_types', data: incidentTypes, setData: setIncidentTypes },
+      { collectionName: 'incident_severities', data: incidentSeverities, setData: setIncidentSeverities },
+      { collectionName: 'roles', data: roles, setData: setRoles },
+      { collectionName: 'periodic_tests', data: periodicTests, setData: setPeriodicTests },
+      { collectionName: 'pest_observations', data: pestObservations, setData: setPestObservations },
+      { collectionName: 'users', data: users, setData: setUsers },
+      { collectionName: 'invitations', data: invitations, setData: setInvitations },
+      { collectionName: 'message_logs', data: messageLogs, setData: setMessageLogs },
+      { collectionName: 'gallery_photos', data: galleryPhotos, setData: setGalleryPhotos }
+    ]
+  });
 
   // Seeding logic
   useEffect(() => {
