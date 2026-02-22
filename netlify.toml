@@ -1,0 +1,61 @@
+# Netlify Configuration for SEAFARM MONITOR
+# Alternative deployment option to Firebase Hosting and Cloudflare Pages
+
+[build]
+  publish = "dist"
+  command = "npm run build"
+
+# SPA routing - redirect all routes to index.html
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Build environment variables
+[build.environment]
+  NODE_VERSION = "20"
+  
+  # Firebase Configuration
+  VITE_FIREBASE_API_KEY = "AIzaSyB58GKPIQvikVbaEeiyGNZHrtzFPRgb1UE"
+  VITE_FIREBASE_AUTH_DOMAIN = "seafarm-mntr.firebaseapp.com"
+  VITE_FIREBASE_DATABASE_URL = "https://seafarm-mntr-default-rtdb.europe-west1.firebasedatabase.app"
+  VITE_FIREBASE_PROJECT_ID = "seafarm-mntr"
+  VITE_FIREBASE_STORAGE_BUCKET = "seafarm-mntr.firebasestorage.app"
+  VITE_FIREBASE_MESSAGING_SENDER_ID = "860357255311"
+  VITE_FIREBASE_APP_ID = "1:860357255311:web:00d1f44c1940c3a64f50fa"
+  VITE_FIREBASE_MEASUREMENT_ID = "G-HGH1652SE0"
+  
+  # Gemini API (disabled)
+  VITE_GEMINI_API_KEY = ""
+
+# Cache control headers for optimal performance
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+# Cache static assets for 1 year
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Don't cache HTML
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# Cache CSS and JS with hash for 1 year
+[[headers]]
+  for = "/*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
