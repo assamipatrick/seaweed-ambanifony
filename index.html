@@ -1,14 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <!-- Other head elements and styles -->
-    <!-- Removed Tailwind CDN script line -->
-</head>
-<body>
-    <h1>Hello, World!</h1>
-    <!-- Your content goes here -->
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#3b82f6" />
+    <link rel="apple-touch-icon" href="/icon-192x192.png" />
+    <title>SEAFARM MONITOR - Seaweed Farm ERP</title>
+    <!-- ❌ PAS DE CDN ICI - Tailwind est dans index.css -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <!-- ... rest of head ... -->
+  </head>
+  <body>
+    <div id="root"></div>
+    <!-- ... scripts ... -->
+    <script type="module" src="/index.tsx"></script>
+  </body>
 </html>
