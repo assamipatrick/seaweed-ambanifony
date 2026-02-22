@@ -15,14 +15,14 @@ import type {
 
 // FIX: Safely access API key to prevent "process is not defined" error in browser environments
 const apiKey = typeof process !== 'undefined' && process.env ? process.env.API_KEY : '';
-// FIX: Use named parameter for apiKey during initialization.
-const ai = new GoogleGenAI({ apiKey });
+// FIX: Only initialize GoogleGenAI when a valid API key is present to prevent initialization crash
+const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
 
 // Helper to run prompt with basic text model
 async function runPrompt(prompt: string): Promise<string> {
     // FIX: Add API key check to fail gracefully.
-    if (!apiKey) {
+    if (!apiKey || !ai) {
         console.warn("Gemini API Key is missing. Narrative generation skipped.");
         return "API Key missing. Cannot generate narrative.";
     }
