@@ -1,8 +1,11 @@
-// Importing ErrorBoundary
-import ErrorBoundary from './ErrorBoundary';
-
-// Adding the index.css file
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
 import './index.css';
 
-// Rest of the code...
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
 
