@@ -1,19 +1,8 @@
+// Importing ErrorBoundary
+import ErrorBoundary from './ErrorBoundary';
 
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import App from './App';
-import ErrorBoundary from './components/ErrorBoundary';
+// Adding the index.css file
+import './index.css';
 
-const rootElement = document.getElementById('root');
-if (!rootElement) {
-  throw new Error("Could not find root element to mount to");
-}
+// Rest of the code...
 
-const root = ReactDOM.createRoot(rootElement);
-root.render(
-  <React.StrictMode>
-    <ErrorBoundary>
-      <App />
-    </ErrorBoundary>
-  </React.StrictMode>
-);
