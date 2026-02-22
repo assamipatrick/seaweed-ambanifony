@@ -3,6 +3,7 @@ import React, { createContext, useState, useContext, useEffect, useRef } from 'r
 import type { Site, Farmer, CreditType, FarmerCredit, Employee, SeaweedType, Module, CultivationCycle, ModuleStatusHistory, StockMovement, PressingSlip, PressedStockMovement, ExportDocument, SiteTransfer, ServiceProvider, SeaweedPriceHistory, Repayment, FarmerDelivery, CuttingOperation, SiteTransferHistoryEntry, Incident, IncidentType, IncidentSeverity, PeriodicTest, Role, MonthlyPayment, TestPeriod, PestObservation, User, Invitation, MessageLog, GalleryPhoto } from '../types';
 import { ModuleStatus, StockMovementType, PressedStockMovementType, SiteTransferStatus, ExportDocType, ContainerType, IncidentStatus, RecipientType, InvitationStatus, FarmerStatus, EmployeeStatus, ServiceProviderStatus } from '../types';
 import { PERMISSIONS } from '../permissions';
+import { insertRecord, updateRecord } from '../services/supabaseService';
 
 // --- Default Seed Data ---
 const defaultIncidentTypes: IncidentType[] = [
@@ -813,6 +814,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
         setCuttingOperations(prev => [...prev, newOperation]);
         if (newCredits.length > 0) setFarmerCredits(prev => [...prev, ...newCredits]);
+        // Background sync to Supabase
+        insertRecord('cutting_operations', newOperation).catch((err: unknown) => {
+          console.warn('[DataContext] Supabase sync failed for addCuttingOperation:', err instanceof Error ? err.message : err);
+        });
       },
       updateCuttingOperation: (updatedOperation: CuttingOperation, moduleWeights?: Record<string, number>, plantingDate?: string) => {
         const originalOperation = cuttingOperations.find(op => op.id === updatedOperation.id);
@@ -826,6 +831,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         // 1. Update CuttingOperations array
         setCuttingOperations(prevOps => prevOps.map(op => op.id === updatedOperation.id ? updatedOperation : op));
+        // Background sync to Supabase
+        updateRecord('cutting_operations', updatedOperation.id, updatedOperation).catch((err: unknown) => {
+          console.warn('[DataContext] Supabase sync failed for updateCuttingOperation:', err instanceof Error ? err.message : err);
+        });
 
         // 2. Directly update the associated cultivation cycle
         setCultivationCycles(prevCycles => prevCycles.map(c => {
@@ -933,6 +942,12 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       updateMultipleCuttingOperations: (operationIds: string[], paymentDate: string) => {
         const idSet = new Set(operationIds);
         setCuttingOperations(prev => prev.map(op => idSet.has(op.id) ? { ...op, isPaid: true, paymentDate } : op));
+        // Background sync to Supabase for each updated operation
+        operationIds.forEach(id => {
+          updateRecord('cutting_operations', id, { isPaid: true, paymentDate }).catch((err: unknown) => {
+            console.warn('[DataContext] Supabase sync failed for updateMultipleCuttingOperations:', err instanceof Error ? err.message : err);
+          });
+        });
       },
       deleteCuttingOperation: (operationId: string) => {
           const opToDelete = cuttingOperations.find(op => op.id === operationId);
