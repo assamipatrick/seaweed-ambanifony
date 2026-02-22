@@ -7,7 +7,7 @@ import Button from './ui/Button';
 import Icon from './ui/Icon';
 import PrintPage from './printable/PrintPage';
 import { numberToWords } from '../utils/numberToWords';
-import { COUNTRIES } from '../../constants';
+import { COUNTRIES } from '../constants';
 
 declare global {
   interface Window {
@@ -203,7 +203,7 @@ const ServiceProviderPage: FC<any> = ({ rows, periodName, pageIndex, totalPages,
                  <header className="mb-2">
                     <div className="grid grid-cols-4 items-start">
                         <div className="col-span-1">
-                            {settings.company.logoUrl && <img src={settings.company.logoUrl} alt="Company Logo" className="h-12 w-auto object-contain" />
+                            {settings.company.logoUrl && <img src={settings.company.logoUrl} alt="Company Logo" className="h-12 w-auto object-contain" />}
                         </div>
                         <div className="col-span-2 text-center">
                             <h1 className="font-bold text-sm uppercase mb-0.5">{settings.company.name}</h1>
@@ -310,7 +310,7 @@ const DenominationPage: FC<{
                 <header className="mb-2">
                      <div className="grid grid-cols-4 items-start">
                         <div className="col-span-1">
-                            {settings.company.logoUrl && <img src={settings.company.logoUrl} alt="Company Logo" className="h-12 w-auto object-contain" />
+                            {settings.company.logoUrl && <img src={settings.company.logoUrl} alt="Company Logo" className="h-12 w-auto object-contain" />}
                         </div>
                         <div className="col-span-2 text-center">
                             <h1 className="font-bold text-sm uppercase mb-0.5">{settings.company.name}</h1>
