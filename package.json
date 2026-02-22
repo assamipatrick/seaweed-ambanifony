@@ -1,1 +1,7 @@
-{\n  \"name\": \"your-project-name\",\n  \"version\": \"1.0.0\",\n  \"description\": \"Your project description\",\n  \"main\": \"index.js\",\n  \"scripts\": {\n    \"test\": \"echo 'Error: no test specified' && exit 1\"\n  },\n  \"author\": \"Your Name\",\n  \"license\": \"ISC\",\n  \"devDependencies\": {\n    \"tailwindcss\": \"latest\",\n    \"postcss\": \"latest\",\n    \"autoprefixer\": \"latest\"\n  }\n}
+{
+  "devDependencies": {
+    "tailwindcss": "^2.2.19",
+    "postcss": "^8.4.5",
+    "autoprefixer": "^10.4.2"
+  }
+}
